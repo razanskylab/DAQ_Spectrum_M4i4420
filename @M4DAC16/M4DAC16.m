@@ -108,14 +108,12 @@ classdef M4DAC16<handle
 
   end
 
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Constructor
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function dac = M4DAC16(doConnect)
-
-
       if nargin == 0
         doConnect = dac.CONNECT_ON_STARTUP;
       end
@@ -133,16 +131,16 @@ classdef M4DAC16<handle
         dac.mRegs = spcMCreateRegMap();
         dac.mErrors = spcMCreateErrorMap();
 
-        channels = repmat( struct( ...
+        channels = repmat(struct(...
           'inputrange',   [], ...
           'term',         [], ...
-          'inputoffset',      [], ...
-          'diffinput',    []  ), 1, 2);
+          'inputoffset',  [], ...
+          'diffinput',    []), 1, 2);
 
         channels(1).inputrange = 10000; % [mV]
         channels(1).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
-        channels(1).inputoffset = 0; 
-        channels(1).diffinput = 0; 
+        channels(1).inputoffset = 0;
+        channels(1).diffinput = 0;
 
         channels(2).inputrange = 10000; % [mV]
         channels(2).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
@@ -156,7 +154,7 @@ classdef M4DAC16<handle
         %dac.samplingRate = dac.samplingRate;
         %dac.externalTrigger = dac.externalTrigger;
         %dac.acquisitionMode = dac.acquisitionMode;
-        %dac.delay = dac.delay; 
+        %dac.delay = dac.delay;
         %dac.timeout = dac.timeout;
 
       else
@@ -164,23 +162,25 @@ classdef M4DAC16<handle
       end
     end
 
-    % TODO
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Save function
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function saveObj = saveobj(dac)
       saveObj = [];
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Destructor
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function delete(dac)
       if dac.isConnected
         dac.Close_Connection();
       end
     end
+  end
 
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % Urs like to declare his functions....
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  methods
     % Function declaration for functions sture in the @FastDAQ folder
     % Make sure to update input/output
     Close_Connection(dac); % close connection to DAC
@@ -192,10 +192,14 @@ classdef M4DAC16<handle
     Free_FIFO_Buffer(dac);
     acquiredData = Acquire_Multi_Data(dac, errorCode);
     errorCode = Start_Multi_Mode(dac);
+  end
 
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % SET / GET functions
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  methods
     function tl = get.triggerLevel(dac)
-      
-      mRegs = spcMCreateRegMap ();
+      mRegs = spcMCreateRegMap();
       [err, tl.ext0_0] = spcm_dwGetParam_i32(dac.cardInfo.hDrv, mRegs('SPC_TRIG_EXT0_LEVEL0'));
       if err
         error('Could not read trigger level 0 of ext0');
@@ -207,15 +211,13 @@ classdef M4DAC16<handle
       [err, tl.ext1_0] = spcm_dwGetParam_i32(dac.cardInfo.hDrv, mRegs('SPC_TRIG_EXT1_LEVEL1'));
       if err
         error('Could not read trigger level 0 of ext1');
-      end   
+      end
     end
 
+    %---------------------------------------------------------------------------
     % Set the timeout of the dac in ms
-
     function set.timeout(dac, to)
-
-      mRegs = spcMCreateRegMap ();
-
+      mRegs = spcMCreateRegMap();
       % ----- set timeout -----
       errorCode = spcm_dwSetParam_i32 (dac.cardInfo.hDrv, mRegs('SPC_TIMEOUT'), to);
       if (errorCode ~= 0)
@@ -225,16 +227,13 @@ classdef M4DAC16<handle
       else
         fprintf(['[M4DAC16] Successfully set timeout to ', num2str(to/1000), ' s.\n']);
       end
-
       dac.timeout = to;
-
     end
 
+    %---------------------------------------------------------------------------
     % trigger level seems to reset itself every line
     function set.triggerLevel(dac, tl)
-      
       mRegs = spcMCreateRegMap ();
-
       % Get boundaries and step size of trigger levels
       [err(1), ext0.min]  = spcm_dwGetParam_i32(dac.cardInfo.hDrv, mRegs('SPC_TRIG_EXT_AVAIL0_MIN'));
       [err(2), ext0.max]  = spcm_dwGetParam_i32(dac.cardInfo.hDrv, mRegs('SPC_TRIG_EXT_AVAIL0_MAX'));
@@ -293,8 +292,8 @@ classdef M4DAC16<handle
 
     end
 
+    %---------------------------------------------------------------------------
     function set.triggerChannel(dac, tc)
-
       warning('Not tested yet.');
 
       [success, cardInfo] = spcMSetupTrigChannel(dac.cardInfo, ...
@@ -311,7 +310,6 @@ classdef M4DAC16<handle
       else
         dac.triggerChannel = tc;
       end
-
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -319,29 +317,27 @@ classdef M4DAC16<handle
     % r channel settings. With this we do not have to define the whole channel e
     % verytime we want to modify only the sensitivity
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %---------------------------------------------------------------------------
     function set.sensitivityPd(dac, sensitivityPd)
-
       if ~dac.beSilent
         fprintf('[M4DAC16] Setting channel 0 sensitivity.\n');
       end
-
       dac.channels(1).inputrange = sensitivityPd;
       dac.sensitivityPd = sensitivityPd;
     end
-    
-    function set.sensitivityUs(dac, sensitivityUs)
 
+    %---------------------------------------------------------------------------
+    function set.sensitivityUs(dac, sensitivityUs)
       if ~dac.beSilent
         fprintf('[M4DAC16] Setting channel 1 sensitivity.\n');
       end
-
       dac.channels(2).inputrange = sensitivityUs;
       dac.sensitivityUs = sensitivityUs;
     end
 
+    %---------------------------------------------------------------------------
     % setting delay of data acquisition card
-   %{
- function set.delay(dac, delay)
+    function set.delay(dac, delay)
       fprintf(['[M4DAC16] Setting the delay to ', num2str(delay), ' samples.\n']);
 
       % Check validity of delay
@@ -366,16 +362,13 @@ classdef M4DAC16<handle
       else
         dac.delay = delay;
       end
-
     end
 
-%}
 
-
+    %---------------------------------------------------------------------------
     % Function to set sample rate of data acquisition card, takes care that we
     % do not exceed max and min limits and that we have an open connection
     function set.samplingRate(dac, samplingRate)
-
       dac.samplingRate = samplingRate;
 
       if (dac.isConnected == 0)
@@ -387,23 +380,20 @@ classdef M4DAC16<handle
         elseif (samplingRate > dac.cardInfo.maxSamplerate)
           error('[M4DAC16] SamplingRate has to be <= %5.0f', ...
             dac.cardInfo.maxSamplerate);
-        else
-
-          if ~dac.beSilent
-            fprintf('[M4DAC16] Setting sampling rate: %5.0f \n', samplingRate);
-          end
-
-          [success, dac.cardInfo] = spcMSetupClockPLL(dac.cardInfo, ...
-            samplingRate, 0);
-
-          if (success == 0)
-            error(['[M4DAC16] Could not set the sampling rate: ', ...
-              dac.cardInfo.errorText]);
-          end
         end
 
-      end
+        if ~dac.beSilent
+          fprintf('[M4DAC16] Setting sampling rate: %5.0f \n', samplingRate);
+        end
 
+        [success, dac.cardInfo] = spcMSetupClockPLL(dac.cardInfo, ...
+          samplingRate, 0);
+
+        if (success == 0)
+          error(['[M4DAC16] Could not set the sampling rate: ', ...
+            dac.cardInfo.errorText]);
+        end
+      end
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -423,8 +413,6 @@ classdef M4DAC16<handle
       if (size(channels) == size(dac.channels))
         % check if channel input type is correct (i.e. if it contains all requir
         % ed fields)
-
-
         dac.channels = channels;
 
         % Set all channels
@@ -441,38 +429,11 @@ classdef M4DAC16<handle
           if (success == 0)
             error(['[M4DAC16] Could not set channel ', num2str(i), '.']);
           end
-
         end
-
       else
         error('[M4DAC16] Number of channels have to aggree.');
       end
     end
-
-%{
-    % Set card to multoIO mode
-    function set.multiIO(dac, multiIO)
-
-      if ~dac.beSilent
-        fprintf('[FastDAQ] Setting up multiIO mode.\n');
-      end
-
-      dac.multiIO = multiIO;
-
-      [success, dac.cardInfo] = ...
-        spcMSetupMultiIO (    ...
-          dac.cardInfo,       ...
-          dac.multiIO.modeX0, ...
-          dac.multiIO.modeX1);
-          % (dac.cardInfo, modeX0, modeX1)
-
-      if (success == 0)
-        error('[FastDAQ] Could not setup MultiIO mode.');
-      end
-
-    end
-%}
-
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Generation mode setup: defines the generation mode for the next run. The f
@@ -480,7 +441,6 @@ classdef M4DAC16<handle
     % to use one generation mode at a time.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.acquisitionMode(dac, acquisitionMode)
-
       if ~dac.beSilent
         fprintf('[M4DAC16] Setting up data acquisistion mode.\n');
       end
@@ -498,14 +458,12 @@ classdef M4DAC16<handle
           error(['[M4DAC16] Error while setting up data acquisisiton mode: ', ...
             dac.cardInfo.errorText]);
       end
-
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Setting up the external trigger of the data acquisistion card.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.externalTrigger(dac, externalTrigger)
-
       if ~dac.beSilent
         fprintf('[M4DAC16] Setting up the external trigger.\n')
       end
@@ -523,14 +481,12 @@ classdef M4DAC16<handle
       else
         dac.externalTrigger = externalTrigger;
       end
-
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set datatype (0 --> 16 bit integer, 1 --> float)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.dataType(dac, dataType)
-
       if (dataType == 0)
         % 16 bit integer
         dac.dataType = 0;
@@ -547,11 +503,6 @@ classdef M4DAC16<handle
         % invalid argument
         error('[M4DAC16] You passed an invalid option as dataType.');
       end
-
     end
-
   end
-
 end
-
-% ~ end of file
