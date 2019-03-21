@@ -12,14 +12,16 @@
 %   - Add a function which checks the integrity of all passed arguments
 % - lots of other thigns ;-)
 
-classdef M4DAC16<handle
+classdef M4DAC16<BaseHardwareClass
 
   properties (Constant = true)
     NO_CHANNELS = 2;
     cardPort = '\dev\spcm0';
+
     CONNECT_ON_STARTUP = 1;
-    BYTES_PER_SAMPLE = 2; % 16 bit = 2 bytes...
+    BYTES_PER_SAMPLE = 2; % [Byte] 16 bit = 2 bytes...
     RESOLUTION = 16; % 16 bit ADC resolution
+
     % FLAGS for convenience
     SAMPLE_DATA = 0;
     TIMESTAMP_DATA = 1;
@@ -28,6 +30,7 @@ classdef M4DAC16<handle
     TIME_OUT = 5000;
     SAMPLING_RATE = 250e6;
     DELAY = 0;
+    TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
   end
 
   properties (SetAccess = private)
@@ -37,9 +40,10 @@ classdef M4DAC16<handle
   % Properties of data acquisition card
   properties
     cardInfo; % stores the informations about the card in a struct
+    FiFo = FiFoSettings(); % subclass for storing fifo settings
+
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
     beSilent(1,1) {mustBeNumericOrLogical} = 0; % either 0 or 1
-
 
     % channel sensitivty can be 10000 / 5000 /
     sensitivityPd(1,1) {mustBeNumeric} = 10000;
@@ -123,6 +127,7 @@ classdef M4DAC16<handle
 
   properties (Dependent = true)
     triggerCount; % read only, read from card
+    tsBytesAvailable; % available time stamp bytes
   end
 
 
@@ -212,7 +217,7 @@ classdef M4DAC16<handle
     function timeOut = get.timeout(DAQ)
       [err, timeOut] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TIMEOUT'));
       if err
-        short_warn('Could not read timeOut!');
+        DAQ.Verbose_Warn('Could not read timeOut!');
         timeOut = [];
       end
     end
@@ -298,14 +303,14 @@ classdef M4DAC16<handle
       maxRate = DAQ.cardInfo.maxSamplerate;
 
       if (DAQ.isConnected == 0)
-        short_warn('[M4DAC16] No open connection.');
+        DAQ.Verbose_Warn('[M4DAC16] No open connection.');
       else
         if (samplingRate < DAQ.cardInfo.minSamplerate)
-          short_warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
+          DAQ.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
             DAQ.cardInfo.minSamplerate);
           samplingRate = DAQ.cardInfo.minSamplerate;
         elseif (samplingRate > maxRate)
-          short_warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
+          DAQ.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
             maxRate);
           samplingRate = maxRate;
         end
@@ -314,7 +319,7 @@ classdef M4DAC16<handle
           samplingRate = maxRate./floor(maxRate/samplingRate);
             % sets to next higher allowed sampling rate
           warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
-          short_warn(warnText);
+          DAQ.Verbose_Warn(warnText);
         end
 
         if ~DAQ.beSilent
@@ -379,6 +384,11 @@ classdef M4DAC16<handle
       DAQ.externalTrigger = externalTrigger;
     end
 
+    function set.beSilent(DAQ, beSilent)
+      DAQ.verboseOutput = beSilent;
+      DAQ.beSilent = beSilent;
+    end
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set datatype (0 --> 16 bit integer, 1 --> float)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -405,11 +415,23 @@ classdef M4DAC16<handle
       [errCode, triggerCount] = spcm_dwGetParam_i64(DAQ.cardInfo.hDrv, 200905);
         % 200905 = SPC_TRIGGERCOUNTER
       if errCode
-        short_warn('Could not read triggerCount!');
+        DAQ.Verbose_Warn('Could not read triggerCount!');
         [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
         spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        short_warn(DAQ.cardInfo.errorText);
+        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
         triggerCount = [];
+      end
+    end
+
+    function tsBytesAvailable = get.tsBytesAvailable(DAQ)
+      [errCode, tsBytesAvailable] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TS_AVAIL_USER_LEN'));
+        % 200905 = SPC_TRIGGERCOUNTER
+      if errCode
+        DAQ.Verbose_Warn('Could not read tsBytesAvailable!');
+        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
+        tsBytesAvailable = [];
       end
     end
 

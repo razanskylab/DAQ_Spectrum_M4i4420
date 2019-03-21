@@ -1,77 +1,58 @@
 % File:     Setup_FIFO_Multi_Mode.m @ FastDAQ
 % Mail:     johannesrebling@gmail.com
 
-function Setup_FIFO_Multi_Mode(DAQ,nChannels,nShots)
+function Setup_FIFO_Multi_Mode(DAQ)
+  tic;
+  DAQ.PrintF('[M4DAC16] Preparing Multi-FiFo acquisition.\n');
 
-  fprintf('[FastDAQ] Setting up FIFO Mode.\n');
 
-  % helper maps to use label names for registers and errors
-  mRegs = spcMCreateRegMap();
-  mErrors = spcMCreateErrorMap();
+  % SETUP FIFO SETTINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % spcMSetupModeRecFIFOMulti (DAQ.cardInfo, chEnableH, chEnableL, segmentSize, postSamples,segmentsToRec);
+  % NOTE!!! segmentSize in SAMPLES
 
-  % no need to set trigger frequency since this is done by Initialize_Hardware.m
-  % no need to set trigger mode since this is done by Initialize_Hardware.m
-  % no need to program input channels since this is already done
-
-  % *** Set the recording mode to FIFO multi ***
-  [success, DAQ.cardInfo] = spcMSetupModeRecFIFOMulti (...
-    DAQ.cardInfo, ... % cardInfo
-    DAQ.fifoMode.chMaskH, ... % mask for upper 32 channels
-    DAQ.fifoMode.chMaskL, ... % mask for lower 32 channels
-    DAQ.fifoMode.nSamples, ... % segment size
-    DAQ.fifoMode.postSamples, ... % postSamples
-    DAQ.fifoMode.loopsToRec); % segments to record
-
+  chEnableL = bitshift(1,DAQ.FiFo.nChannels) - 1;
+  [success, DAQ.cardInfo] = spcMSetupModeRecFIFOMulti (DAQ.cardInfo, 0, ...
+    chEnableL, DAQ.FiFo.shotSize, DAQ.FiFo.postSamples, DAQ.FiFo.nShots);
   if (success == false)
-      spcMErrorMessageStdOut (DAQ.cardInfo, ...
-        'Error: spcMSetupModeRecFIFOSingle:\n\t', true);
-      return;
+    spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcMSetupModeRecFIFOSingle:\n\t', true);
+    error(DAQ.cardInfo.errorText);
   end
 
-  % *** Allocate buffer memory ***
-  errorCode = spcm_dwSetupFIFOBuffer(...
-    DAQ.cardInfo.hDrv, ...
-    1, ... % dwBufType
-    1, ... % bAllocate
-    1, ... % bRead
-    DAQ.fifoMode.nSamples * DAQ.fifoMode.loopsToRec, ... % dwBuffer
-    0); % dwNotify
+  % allocate FIFO buffer memory %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  DAQ.VPrintF('   Allocating FIFO data buffer (%2.1f MB).\n',DAQ.FiFo.bufferSize*1e-6);
+  %spcm_dwSetupFIFOBuffer(hDrv, dwBufType, bAllocate, bRead, dwBufferInBytes, dwNotifyInBytes);
+  % bAllocate = 1 for allocation of FIFO buffer and 0 to set the FIFO buffer free a
+  % bRead defines the direction of FIFO transfer: 1 is reading
+  % The value dwBufferInBytes defines the length of the buffer to allocate in bytes.
+  % The value dwNotifyInBytes defines the notify size in bytes.
+  % This is the block size that can be read out from the FIFO buffer using the GetData
+  % and the GetRAWData functions.
 
-  % dwBufType:
-  %   0 - sample data
-  %   1 - timestamp data
-  %   2 - slow ABA data
-  % bAllocate:
-  %   1 - allocation of the FIFO buffer
-  %   0 - set the buffer free again
-  % bRead:
-  %   1 - Reading data from card to PC memory
-  %   0 - Writing data from the PC memory to the card
-  % dwBuffer:
-  %   Length of the buffer to allocate in bytes
-  % dwNotify:
-  %   notify size in bytes, block size that can be read from the FIFO buffer
-  %   using GetData and GetRAWData functions
+  errCode = spcm_dwSetupFIFOBuffer (DAQ.cardInfo.hDrv, DAQ.SAMPLE_DATA, 1, 1, ...
+    DAQ.FiFo.bufferSize, DAQ.FiFo.notifySize);
+  % NOTE! bufferSize in Bytes,
+  % NOTE! notifySize in Bytes
 
-  if (errorCode ~= 0)
-      [success, cardInfo] = spcMCheckSetError (errorCode, cardInfo);
-      spcMErrorMessageStdOut (cardInfo, 'spcm_dwSetupFIFOBuffer:\n\t', true);
-      return;
+  if (errCode ~= 0)
+    [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+    spcMErrorMessageStdOut (DAQ.cardInfo, 'spcm_dwSetupFIFOBuffer:\n\t', true);
+    error(DAQ.cardInfo.errorText);
   end
 
-  % *** Set timeout ***
 
-  errorCode = spcm_dwSetParam_i32 (...
-    DAQ.cardInfo.hDrv, ...
-    mRegs('SPC_TIMEOUT'), ...
-    50000);
-
-  if (errorCode ~= 0)
-    [success, DAQ.cardInfo] = spcMCheckSetError (errorCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut (...
-      DAQ.cardInfo, ...
-      'Error: spcm_dwSetParam_i32:\n\t', true);
-    return;
+  % allocate timestamps buffer memory %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % In this example the notify size is set to zero, meaning that we don’t want to
+  % be notified until all extra data has been transferred. Please have a look at
+  % the sample data transfer in an earlier chapter to see more details on the
+  % notify size.
+  DAQ.VPrintF('   Allocating FIFO time stamp buffer (%1.0f kB).\n',DAQ.FiFo.bufferSizeTS*1e-3);
+  errCode = spcm_dwSetupFIFOBuffer(DAQ.cardInfo.hDrv,DAQ.TIMESTAMP_DATA,1,1,DAQ.FiFo.bufferSizeTS,DAQ.FiFo.notifySizeTS);
+  if errCode
+    [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+    spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetupFIFOBuffer:\n\t', true);
+    error(DAQ.cardInfo.errorText);
   end
+
+  DAQ.Done();
 
 end

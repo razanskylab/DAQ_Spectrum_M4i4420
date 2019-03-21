@@ -2,7 +2,7 @@
 
 function Free_FIFO_Buffer(DAQ)
 
-  fprintf('[M4DAC16] Freeing FIFI buffer...'); 
+  fprintf('[M4DAC16] Freeing FoFo buffer...'); 
   %% ---------------------------------------------------------------------------
   % free data buffer
   errCode = spcm_dwSetupFIFOBuffer (DAQ.cardInfo.hDrv, 0, 0, 1, 0, 0);
