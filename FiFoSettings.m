@@ -28,14 +28,14 @@ classdef FiFoSettings
   end
 
   properties (Dependent = true)
-    postSamples(1,1)    {mustBeInteger,mustBeNonnegative};
-    bufferSize(1,1)     {mustBeInteger,mustBeNonnegative}; % [byte]
-    notifySize(1,1)     {mustBeInteger,mustBeNonnegative}; % [byte]
-    nBlocks(1,1)        {mustBeInteger,mustBeNonnegative};
-    notifySizeTS(1,1)   {mustBeInteger,mustBeNonnegative}; % [byte]
+    postSamples(1,1)      {mustBeInteger,mustBeNonnegative};
+    bufferSize(1,1)       {mustBeInteger,mustBeNonnegative}; % [byte]
+    notifySize(1,1)       {mustBeInteger,mustBeNonnegative}; % [byte]
+    nBlocks(1,1)          {mustBeInteger,mustBeNonnegative};
+    notifySizeTS(1,1)     {mustBeInteger,mustBeNonnegative}; % [byte]
     shotsPerNotifyTs(1,1) {mustBeInteger,mustBeNonnegative}; % [byte]
-    bufferSizeTS(1,1)   {mustBeInteger,mustBeNonnegative}; % [byte]
-    currentShots(1,:)   {mustBeInteger,mustBeNonnegative}; % [byte]
+    bufferSizeTS(1,1)     {mustBeInteger,mustBeNonnegative}; % [byte]
+    currentShots(1,:)     {mustBeInteger,mustBeNonnegative}; % [byte]
   end
 
   % set / get functions
