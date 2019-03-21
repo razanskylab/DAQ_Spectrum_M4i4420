@@ -22,7 +22,7 @@ classdef M4DAC16<handle
     RESOLUTION = 16; % 16 bit ADC resolution
     % FLAGS for convenience
     SAMPLE_DATA = 0;
-    TIMESTAMP_DATA = 0;
+    TIMESTAMP_DATA = 1;
 
     % DEFAULT Settings
     TIME_OUT = 5000;
@@ -120,6 +120,11 @@ classdef M4DAC16<handle
     timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
     delay(1,1) {mustBeInteger,mustBeNonnegative}; % DAQ trigger delay in samples
   end
+
+  properties (Dependent = true)
+    triggerCount; % read only, read from card
+  end
+
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,7 +333,7 @@ classdef M4DAC16<handle
       end
     end
 
-    % FIXME add get samplingRate! 
+    % FIXME add get samplingRate!
 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -395,5 +400,18 @@ classdef M4DAC16<handle
         error('[M4DAC16] You passed an invalid option as dataType.');
       end
     end
+
+    function triggerCount = get.triggerCount(DAQ)
+      [errCode, triggerCount] = spcm_dwGetParam_i64(DAQ.cardInfo.hDrv, 200905);
+        % 200905 = SPC_TRIGGERCOUNTER
+      if errCode
+        short_warn('Could not read triggerCount!');
+        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        short_warn(DAQ.cardInfo.errorText);
+        triggerCount = [];
+      end
+    end
+
   end
 end
