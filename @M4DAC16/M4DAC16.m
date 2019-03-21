@@ -23,6 +23,11 @@ classdef M4DAC16<handle
     % FLAGS for convenience
     SAMPLE_DATA = 0;
     TIMESTAMP_DATA = 0;
+
+    % DEFAULT Settings
+    TIME_OUT = 5000;
+    SAMPLING_RATE = 250e6;
+    DELAY = 0;
   end
 
   properties (SetAccess = private)
@@ -35,9 +40,6 @@ classdef M4DAC16<handle
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
     beSilent(1,1) {mustBeNumericOrLogical} = 0; % either 0 or 1
 
-    samplingRate(1,1) {mustBeNumeric} = 250e6; % [Hz]
-    % The sampling rate of the digitizer should be 10 times of the applicat
-    % ion frequency.
 
     % channel sensitivty can be 10000 / 5000 /
     sensitivityPd(1,1) {mustBeNumeric} = 10000;
@@ -54,7 +56,6 @@ classdef M4DAC16<handle
     % NOTE ignored in FIFO mode
     offset(1,1) {mustBeNumeric} = 0;
 
-    delay(1,1) {mustBeNumeric} = 0; % DAQ trigger delay in samples
 
     channels = repmat( struct( ...
       'path',         0, ... % 0=Buffered 1=HF input with fixed 50 ohm termination
@@ -108,14 +109,16 @@ classdef M4DAC16<handle
       'ext1_0', 2000 ... % [mV]
       );
 
-    timeout = 5e3; % [ms] 0 means disabled
-
-    % notifySize = 4096;
-    % bufferSize = 100 * 3008;
-
     mRegs = spcMCreateRegMap();
     mErrors = spcMCreateErrorMap();
+  end
 
+  % SET/GET properties, they are assigned their default values during class
+  % creation and get their values directly from the connected card
+  properties
+    samplingRate(1,1) {mustBeInteger,mustBeNonnegative}; % [Hz]
+    timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
+    delay(1,1) {mustBeInteger,mustBeNonnegative}; % DAQ trigger delay in samples
   end
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -157,11 +160,11 @@ classdef M4DAC16<handle
         channels(2).diffinput = 0;
 
         DAQ.channels = channels;
-        DAQ.samplingRate = DAQ.samplingRate;
         %DAQ.externalTrigger = DAQ.externalTrigger;
         %DAQ.acquisitionMode = DAQ.acquisitionMode;
         %DAQ.delay = DAQ.delay;
-        DAQ.timeout = DAQ.timeout;
+        DAQ.samplingRate = DAQ.SAMPLING_RATE;
+        DAQ.timeout = DAQ.TIME_OUT;
 
       else
         fprintf('[M4DAC16] Initialized but not connected yet.\n');
@@ -187,21 +190,6 @@ classdef M4DAC16<handle
   % SET / GET functions
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods
-    function tl = get.triggerLevel(DAQ)
-      [err, tl.ext0_0] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT0_LEVEL0'));
-      if err
-        short_warn('Could not read trigger level 0 of ext0');
-      end
-      [err, tl.ext0_1] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT0_LEVEL1'));
-      if err
-        short_warn('Could not read trigger level 1 of ext0');
-      end
-      [err, tl.ext1_0] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT1_LEVEL1'));
-      if err
-        short_warn('Could not read trigger level 0 of ext1');
-      end
-    end
-
     %---------------------------------------------------------------------------
     % Set/Get the timeout of the DAQ in ms
     function set.timeout(DAQ, to)
@@ -212,9 +200,8 @@ classdef M4DAC16<handle
           spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
           return;
       else
-        fprintf(['[M4DAC16] Successfully set timeout to ', num2str(to/1000), ' s.\n']);
+        fprintf('[M4DAC16] Timeout set to %2.0f s.\n',to/1000);
       end
-      DAQ.timeout = to;
     end
 
     function timeOut = get.timeout(DAQ)
@@ -226,71 +213,10 @@ classdef M4DAC16<handle
     end
 
     %---------------------------------------------------------------------------
-    % trigger level seems to reset itself every line
-    function set.triggerLevel(DAQ, tl)
-      % Get boundaries and step size of trigger levels
-      [err(1), ext0.min]  = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL0_MIN'));
-      [err(2), ext0.max]  = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL0_MAX'));
-      [err(3), ext0.step] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL0_STEP'));
-      [err(4), ext1.min]  = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL1_MIN'));
-      [err(5), ext1.max]  = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL1_MAX'));
-      [err(6), ext1.step] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TRIG_EXT_AVAIL1_STEP'));
-      if max(err)
-        error('Could not read available trigger levels from card');
-      end
-
-      % check if trigger levels are in range
-      if (tl.ext0_0 < ext0.min)
-        warning('trigger ext0_0 too low, rising to minimum');
-        tl.ext0_0 = ext0.min;
-      elseif (tl.ext0_0 > ext0.max)
-        warning('trigger ext0_0 too high, rising to maximum');
-        tl.ext0_0 = ext0.max;
-      else
-        nSteps = round((tl.ext0_0 - ext0.min)/ext0.step);
-        t1.ext0_0 = ext0.min + nSteps * ext0.step;
-      end
-
-      % check if trigger levels are in range
-      if (tl.ext0_1 < ext0.min)
-        warning('trigger ext0_1 too low, rising to minimum');
-        tl.ext0_1 = ext0.min;
-      elseif (tl.ext0_1 > ext0.max)
-        warning('trigger ext0_0 too high, rising to maximum');
-        tl.ext0_1 = ext0.max;
-      else
-        nSteps = round((tl.ext0_1 - ext0.min)/ext0.step);
-        t1.ext0_1 = ext0.min + nSteps * ext0.step;
-      end
-
-      % check if trigger levels are in range
-      if (tl.ext1_0 < ext1.min)
-        warning('trigger ext0_0 too low, rising to minimum');
-        tl.ext1_0 = ext1.min;
-      elseif (tl.ext1_0 > ext1.max)
-        warning('trigger ext0_0 too high, rising to maximum');
-        tl.ext1_0 = ext1.max;
-      else
-        nSteps = round((tl.ext1_0 - ext1.min)/ext0.step);
-        t1.ext1_0 = ext1.min + nSteps * ext1.step;
-      end
-
-      % push all informations to card
-      err2 = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, mRegs('SPC_TRIG_EXT0_LEVEL0'), int32(t1.ext0_0));
-      err2 = err2 + spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, mRegs('SPC_TRIG_EXT0_LEVEL1'), int32(t1.ext0_1));
-      err2 = err2 + spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, mRegs('SPC_TRIG_EXT1_LEVEL0'), int32(t1.ext1_0));
-
-      if err2
-        error('Could not set trigger levels');
-      end
-
-    end
-
-    %---------------------------------------------------------------------------
     function set.triggerChannel(DAQ, tc)
       warning('Not tested yet.');
 
-      [success, cardInfo] = spcMSetupTrigChannel(DAQ.cardInfo, ...
+      [success, DAQ.cardInfo] = spcMSetupTrigChannel(DAQ.cardInfo, ...
         tc.channel, ... % channel used
         tc.trigMode, ... % trigger mode
         tc.trigLevel0, ...
@@ -358,6 +284,7 @@ classdef M4DAC16<handle
       end
     end
 
+    % FIXME add get delay!
 
     %---------------------------------------------------------------------------
     % Function to set sample rate of data acquisition card, takes care that we
@@ -400,6 +327,9 @@ classdef M4DAC16<handle
         end
       end
     end
+
+    % FIXME add get samplingRate! 
+
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Setting up the analog input channels, all at once. There will be a second
