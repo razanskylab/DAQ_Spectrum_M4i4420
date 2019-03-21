@@ -33,6 +33,7 @@ classdef FiFoSettings
     notifySize(1,1)     {mustBeInteger,mustBeNonnegative}; % [byte]
     nBlocks(1,1)        {mustBeInteger,mustBeNonnegative};
     notifySizeTS(1,1)   {mustBeInteger,mustBeNonnegative}; % [byte]
+    shotsPerNotifyTs(1,1) {mustBeInteger,mustBeNonnegative}; % [byte]
     bufferSizeTS(1,1)   {mustBeInteger,mustBeNonnegative}; % [byte]
     currentShots(1,:)   {mustBeInteger,mustBeNonnegative}; % [byte]
   end
@@ -83,6 +84,11 @@ classdef FiFoSettings
       if notifySizeTS < FS.MIN_NOTIFY_SIZE
         notifySizeTS = FS.MIN_NOTIFY_SIZE;
       end
+    end
+
+    function shotsPerNotifyTs = get.shotsPerNotifyTs(FS)
+      shotsPerNotifyTs = FS.notifySizeTS./FS.TIME_STAMP_SIZE;
+        % 256 shots is minimum...
     end
 
     function bufferSizeTS = get.bufferSizeTS(FS)

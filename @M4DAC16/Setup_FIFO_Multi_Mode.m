@@ -53,6 +53,4 @@ function Setup_FIFO_Multi_Mode(DAQ)
     error(DAQ.cardInfo.errorText);
   end
 
-  DAQ.Done();
-
 end
