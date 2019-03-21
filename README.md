@@ -1,4 +1,9 @@
 # @M4DAC16 Class
+
+## Requirements
+- needs https://github.com/razanskylab/BaseHardwareClass
+
+## Card used for programming and in example
 - Installed memory:  4096 MByte
 - Max sampling rate: 250.0 MS/s
 - Channels:          2
@@ -17,9 +22,7 @@
   - AC coupled
   - +-5V range
 
-
 ## trigger
 - use ext1
   - 10k Ohm termination
   - trigger detection on rising and falling
-                                                                                                                                                                                                                                                               
