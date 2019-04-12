@@ -154,7 +154,7 @@ classdef M4DAC16<BaseHardwareClass
         % DAQ.mRegs = spcMCreateRegMap();
         % DAQ.mErrors = spcMCreateErrorMap();
 
-        Open_Connection(DAQ);
+        DAQ.Open_Connection();
         DAQ.Reset(); % recommended by manual
 
         channels = DAQ.channels();
@@ -333,7 +333,7 @@ classdef M4DAC16<BaseHardwareClass
             DAQ.cardInfo.errorText]);
           DAQ.samplingRate = [];
         else
-          DAQ.samplingRate = DAQ.cardInfo.setSamplerate;
+          DAQ.samplingRate = samplingRate;
         end
       end
     end

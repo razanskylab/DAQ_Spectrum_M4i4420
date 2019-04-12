@@ -6,20 +6,16 @@
 
 function Handle_Error(DAQ,errCode)
   if (errCode ~= 0)
-    fprintf('\n');
-    errorMessage = sprintf('[DAQ] Error code %i!',errCode);
-    short_warn(errorMessage);
-    if (errCode == 263)
-      short_warn('[DAQ] Timout while waiting for trigger event!');
-      [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
-    elseif (errCode == 259)
-      short_warn('[DAQ] Command sequence is not allowed!');
-      [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
+    [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
+    if errCode == 263
+      short_warn('[M4DAC16] Timeout while waiting for a trigger!');
+    elseif errCode == 259
+      short_warn('[M4DAC16] Command sequence is not allowed!');
     else
-      [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
-      % spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-      % short_warn(DAQ.cardInfo.errorText);
+      errorMessage = ['DAQ Error: ' DAQ.Parse_Error_Code(errCode)];
+      error(errorMessage);
     end
+    drawnow();
   end
 
 end

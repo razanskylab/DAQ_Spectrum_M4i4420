@@ -19,7 +19,7 @@ function Setup_FIFO_Multi_Mode(DAQ)
   end
 
   % allocate FIFO buffer memory %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  DAQ.VPrintF('   Allocating FIFO data buffer (%2.1f MB).\n',DAQ.FiFo.bufferSize*1e-6);
+  % DAQ.VPrintF('   Allocating FIFO data buffer (%2.1f MB).\n',DAQ.FiFo.bufferSize*1e-6);
   %spcm_dwSetupFIFOBuffer(hDrv, dwBufType, bAllocate, bRead, dwBufferInBytes, dwNotifyInBytes);
   % bAllocate = 1 for allocation of FIFO buffer and 0 to set the FIFO buffer free a
   % bRead defines the direction of FIFO transfer: 1 is reading
@@ -45,10 +45,11 @@ function Setup_FIFO_Multi_Mode(DAQ)
   % be notified until all extra data has been transferred. Please have a look at
   % the sample data transfer in an earlier chapter to see more details on the
   % notify size.
-  DAQ.VPrintF('   Allocating FIFO time stamp buffer (%1.0f kB).\n',DAQ.FiFo.bufferSizeTS*1e-3);
+  % DAQ.VPrintF('   Allocating FIFO time stamp buffer (%1.0f kB).\n',DAQ.FiFo.bufferSizeTS*1e-3);
   errCode = spcm_dwSetupFIFOBuffer(DAQ.cardInfo.hDrv,DAQ.TIMESTAMP_DATA,1,1,DAQ.FiFo.bufferSizeTS,DAQ.FiFo.notifySizeTS);
   if errCode
     [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+    errCode
     spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetupFIFOBuffer:\n\t', true);
     error(DAQ.cardInfo.errorText);
   end
