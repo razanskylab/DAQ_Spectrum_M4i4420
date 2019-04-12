@@ -18,10 +18,10 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
     DAQ.FiFo.currentBlock = iBlock; % required to update depended properties!
     switch DAQ.FiFo.nChannels
     case 1
-      [tsShots,ch0Shots] = DAQ.Get_Next_Fifo_Block();
+      [errCode,tsShots,ch0Shots] = DAQ.Get_Next_Fifo_Block();
       ch0(:,DAQ.FiFo.currentShots) = ch0Shots;
     case 2
-      [tsShots,ch0Shots,ch1Shots] = DAQ.Get_Next_Fifo_Block();
+      [errCode,tsShots,ch0Shots,ch1Shots] = DAQ.Get_Next_Fifo_Block();
       ch0(:,DAQ.FiFo.currentShots) = ch0Shots;
       ch1(:,DAQ.FiFo.currentShots) = ch1Shots;
     end
@@ -33,10 +33,14 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
   tsLastShots = DAQ.Poll_Time_Stamp_Data();
   tsData = [tsData tsLastShots];
 
-  text = sprintf('Block %d/%d', DAQ.FiFo.nBlocks, DAQ.FiFo.nBlocks);
-  cpb.setValue(DAQ.FiFo.nBlocks);  cpb.setText(text);
-  cpb.stop();
-  fprintf('\n');
+  if errCode
+    short_warn('Error occured during acquisition!');
+  else
+    text = sprintf('Block %d/%d', DAQ.FiFo.nBlocks, DAQ.FiFo.nBlocks);
+    cpb.setValue(DAQ.FiFo.nBlocks);  cpb.setText(text);
+    cpb.stop();
+    fprintf('\n');
+  end
 
   %% ---------------------------------------------------------------------------
 

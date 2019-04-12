@@ -127,6 +127,7 @@ classdef M4DAC16<BaseHardwareClass
   properties (Dependent = true)
     triggerCount; % read only, read from card
     tsBytesAvailable; % available time stamp bytes
+    currentError;
   end
 
 
@@ -434,5 +435,9 @@ classdef M4DAC16<BaseHardwareClass
       end
     end
 
+    function currentError = get.currentError(DAQ)
+      [currentError, errorReg, errorVal, DAQ.cardInfo.errorText] = ...
+        spcm_dwGetErrorInfo_i32(DAQ.cardInfo.hDrv);
+    end
   end
 end

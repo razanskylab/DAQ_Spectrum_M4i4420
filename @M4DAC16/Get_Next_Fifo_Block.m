@@ -2,19 +2,10 @@
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
-function [varargout] = Get_Next_Fifo_Block(DAQ)
+function [errCode,varargout] = Get_Next_Fifo_Block(DAQ)
   % ***** wait for the next block -> one block = n shots... *****
   errCode = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_DATA_WAITDMA'));
-  if (errCode ~= 0)
-    if (errCode == 263)
-      error('Timout while waiting for trigger during FIFO acquisition!');
-      [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-    else
-      [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-      spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-      error(DAQ.cardInfo.errorText);
-    end
-  end
+  DAQ.Handle_Error(errCode);
 
   samplesPerChannel = DAQ.FiFo.notifySize/DAQ.FiFo.nChannels/DAQ.FiFo.BYTES_PER_SAMPLE;
   if mod(samplesPerChannel,1)
@@ -39,11 +30,7 @@ function [varargout] = Get_Next_Fifo_Block(DAQ)
     % varargout{3} = ch1Shots;
   end
 
-  if (errCode ~= 0)
-    [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwGetData:\n\t', true);
-    error(DAQ.cardInfo.errorText);
-  end
+  DAQ.Handle_Error(errCode);
 
   if (DAQ.tsBytesAvailable >= DAQ.FiFo.notifySizeTS)
     varargout{1} = DAQ.Poll_Time_Stamp_Data();

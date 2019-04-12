@@ -23,7 +23,7 @@ function Setup_External_Trigger(DAQ,triggerSetup)
     fprintf('[M4DAC16] Setting up the external trigger.\n')
   end
 
-  [success, DAQ.cardInfo] = spcMSetupTrigExternal(...
+  [setupWorked, DAQ.cardInfo] = spcMSetupTrigExternal(...
     DAQ.cardInfo, ...
     triggerSetup.extMode, ...  % 40510 = SPC_TRIG_EXT0_MODE
     triggerSetup.trigTerm, ... % 40110 = SPC_TRIG_TERM
@@ -31,8 +31,8 @@ function Setup_External_Trigger(DAQ,triggerSetup)
     triggerSetup.singleSrc, ... % sets masks if single source is activated
     triggerSetup.extLine); %  % defines the trigger line (0 is big sma, 1 is small MMCX connector)
 
-  if (success == 0)
-    error('[M4DAC16] Could not set up the external trigger correctly.');
+  if ~setupWorked
+    short_warn('[M4DAC16] Could not set up the external trigger correctly.');
   end
 
 end
