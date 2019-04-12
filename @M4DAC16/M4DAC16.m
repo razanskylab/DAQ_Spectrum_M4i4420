@@ -60,7 +60,6 @@ classdef M4DAC16<BaseHardwareClass
     % NOTE ignored in FIFO mode
     offset(1,1) {mustBeNumeric} = 0;
 
-
     channels = repmat( struct( ...
       'path',         0, ... % 0=Buffered 1=HF input with fixed 50 ohm termination
       'inputrange',   10000, ... %
@@ -71,11 +70,11 @@ classdef M4DAC16<BaseHardwareClass
       'diffinput',    0  ), 1, 2); % [0] diff input?
 
     externalTrigger = struct(...
-      'extMode', 1, ... % 1 means rising edge
-      'trigTerm', 0, ... % flag, whether to terminate the trigger inout
+      'extMode', 1, ... % 1 means rising edge, 4 = rising & falling
+      'trigTerm', 1, ... % flag, whether to terminate the trigger inout
       'pulseWidth', 0, ... % pulsewidth for any external trigger source using a pulse counter
       'singleSrc', 1, ... % necessary if multiple trigger lines are used
-      'extLine', 1); % defines the trigger line (0 is big sma, 1 is small MMCX connector)
+      'extLine', 0); % defines the trigger line (0 is big sma, 1 is small MMCX connector)
 
     % spcMSetupTrigChannel (cardInfo, channel, trigMode, trigLevel0, trigLevel1, pulsewidth, trigOut, singleSrc)
     triggerChannel = struct(...

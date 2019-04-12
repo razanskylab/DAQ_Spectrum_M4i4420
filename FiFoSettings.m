@@ -5,7 +5,7 @@ classdef FiFoSettings
       % total number of shots
     shotSize(1,1)       {mustBeInteger,mustBeNonnegative} = 1024*1;
       % size of on shot in samples
-    shotsPerNotify(1,1) {mustBeInteger,mustBeNonnegative} = 10;
+    shotsPerNotify(1,1) {mustBeInteger,mustBeNonnegative} = 16;
       % we get notified about new shots every nShots = shotsPerNotify
       % NOTE adapt to get more frequent updates if needed
       % best to keep this 2^n, i.e. 4, 8, 16
@@ -70,7 +70,7 @@ classdef FiFoSettings
     end
 
     function nBlocks = get.nBlocks(FS)
-      nBlocks = FS.nShots./FS.shotsPerNotify;
+      nBlocks = round(FS.nShots./FS.shotsPerNotify);
     end
 
     function notifySizeTS = get.notifySizeTS(FS)
