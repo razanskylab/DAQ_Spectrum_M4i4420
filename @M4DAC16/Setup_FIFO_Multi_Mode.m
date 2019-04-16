@@ -46,7 +46,8 @@ function Setup_FIFO_Multi_Mode(DAQ)
   % the sample data transfer in an earlier chapter to see more details on the
   % notify size.
   % DAQ.VPrintF('   Allocating FIFO time stamp buffer (%1.0f kB).\n',DAQ.FiFo.bufferSizeTS*1e-3);
-  errCode = spcm_dwSetupFIFOBuffer(DAQ.cardInfo.hDrv,DAQ.TIMESTAMP_DATA,1,1,DAQ.FiFo.bufferSizeTS,DAQ.FiFo.notifySizeTS);
+  errCode = spcm_dwSetupFIFOBuffer(DAQ.cardInfo.hDrv,DAQ.TIMESTAMP_DATA,1,1,...
+    DAQ.FiFo.bufferSizeTS,DAQ.FiFo.notifySizeTS);
   if errCode
     [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
     errCode

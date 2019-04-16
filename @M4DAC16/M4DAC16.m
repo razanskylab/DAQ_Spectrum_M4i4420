@@ -92,13 +92,6 @@ classdef M4DAC16<BaseHardwareClass
       'nSamples', 3008,  ... % must be dividable 16
       'postSamples', 2992);
 
-    fifoMode = struct(...
-      'chMaskH', 0,  ...
-      'chMaskL', 3,  ...
-      'nSamples', 3008,  ... % must be dividable 16
-      'postSamples', 2992, ...
-      'loopsToRec', 100); % [bytes]
-
     multiMode = struct(...
       'chMaskH', 0,  ...
       'chMaskL', 3,  ...
@@ -127,6 +120,7 @@ classdef M4DAC16<BaseHardwareClass
   properties (Dependent = true)
     triggerCount; % read only, read from card
     tsBytesAvailable; % available time stamp bytes
+    bytesAvailable; % available time stamp bytes
     currentError;
   end
 
@@ -420,6 +414,18 @@ classdef M4DAC16<BaseHardwareClass
         spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
         DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
         triggerCount = [];
+      end
+    end
+
+    function bytesAvailable = get.bytesAvailable(DAQ)
+      [errCode, bytesAvailable] = spcm_dwGetParam_i64(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_DATA_AVAIL_USER_LEN'));
+        % 200905 = SPC_TRIGGERCOUNTER
+      if errCode
+        DAQ.Verbose_Warn('Could not read bytesAvailable!');
+        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
+        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
+        bytesAvailable = [];
       end
     end
 

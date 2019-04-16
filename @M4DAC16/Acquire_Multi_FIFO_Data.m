@@ -13,8 +13,23 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
   samplesPerChannel = notifySize./nCh./DAQ.FiFo.BYTES_PER_SAMPLE;
   nBlocks = DAQ.FiFo.nBlocks;
   shotSize = DAQ.FiFo.shotSize;
+  shotSizePd = DAQ.FiFo.shotSizePd;
   shotsPerNotify = DAQ.FiFo.shotsPerNotify;
   notifySizeTS = DAQ.FiFo.notifySizeTS;
+
+  forcedTriggers = 0;
+  % we have to acquire same sized shots for both channels
+  % but we don't need super long shots for the PD channel
+  % precalculate the index of the shots/indicies we want here, and then used it
+  % during the acquisition to save time
+  pdSamplesRange = [1:shotSizePd];
+  pdSamples = [];
+  for iShot = 1:shotsPerNotify
+    startIdx = (iShot-1)*shotSize+1;
+    endIdx = startIdx+shotSizePd-1;
+    rangeIdx = startIdx:endIdx;
+    pdSamples = [pdSamples rangeIdx];
+  end
 
   DAQ.VPrintF('[M4DAC16] Starting data acquisition!\n'); tic;
   cpb = prep_console_progress_bar(nBlocks);
@@ -35,10 +50,15 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
       cpb.setValue(iBlock);  cpb.setText(text);
     end
     DAQ.FiFo.currentBlock = iBlock; % required to update depended properties!
-
     % ***** wait for the next block -> one block = n shots... *****
     errCode = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_DATA_WAITDMA'));
-    DAQ.Handle_Error(errCode);
+    if errCode == 263 % timeout during acq.
+      % we force a trigger even and keep track of how many times this was neccesary
+      [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
+      break;
+    else
+      DAQ.Handle_Error(errCode);
+    end
 
     switch nCh
     case 1
@@ -48,8 +68,9 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
     case 2
       [errCode, ch0Block, ch1Block] = spcm_dwGetData(DAQ.cardInfo.hDrv, 0, ...
         samplesPerChannel, nCh, DAQ.FiFo.dataType);
+      ch1Block = ch1Block(pdSamples);
       ch0(:,DAQ.FiFo.currentShots) = reshape(ch0Block,shotSize,shotsPerNotify);
-      ch1(:,DAQ.FiFo.currentShots) = reshape(ch1Block,shotSize,shotsPerNotify);
+      ch1(:,DAQ.FiFo.currentShots) = reshape(ch1Block,shotSizePd,shotsPerNotify);
     end
     DAQ.Handle_Error(errCode);
 
@@ -63,6 +84,7 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
   tsLastShots = DAQ.Poll_Time_Stamp_Data();
   tsData = [tsData tsLastShots];
   tsData = single(tsData)./DAQ.samplingRate;
+
   % done with actual data acquisition %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if errCode
     fprintf('\n');
@@ -74,14 +96,20 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
     fprintf('\n');
   end
 
+  DAQ.Free_FIFO_Buffer();
+  DAQ.Stop();
+  DAQ.VPrintF('[M4DAC16] Data acquisition completed in %2.2f s!\n',toc);
+
   %% ---------------------------------------------------------------------------
   if (DAQ.triggerCount ~= DAQ.FiFo.nShots)
     warnText = sprintf('Trigger count: %i Expected shots: %i!\n',...
       DAQ.triggerCount,DAQ.FiFo.nShots);
     DAQ.Verbose_Warn(warnText);
   end
-  DAQ.Free_FIFO_Buffer()
-  DAQ.Stop();
 
-  DAQ.VPrintF('[M4DAC16] Data acquisition completed in %2.2f s!\n',toc);
+  if forcedTriggers
+    warnText = sprintf('We forced %i trigger events!\n',forcedTriggers);
+    DAQ.Verbose_Warn(warnText);
+  end
+
 end

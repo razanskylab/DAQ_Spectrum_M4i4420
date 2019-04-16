@@ -1,11 +1,17 @@
-classdef FiFoSettings
+classdef FiFoSettings < handle
 
   properties
     nShots(1,1)         {mustBeInteger,mustBeNonnegative};
       % total number of shots
     shotSize(1,1)       {mustBeInteger,mustBeNonnegative} = 1024*1;
       % size of on shot in samples
-    shotsinBuffer(1,1)  {mustBeInteger,mustBeNonnegative} = 2048*5;
+      % pratical lower limit is 512 for complicated fifo reasons related to
+      % block size etc...can prob. be fixed if this ever becomes a limitation
+      % but might require math which Joe does not like...
+    shotSizePd(1,1)     {mustBeInteger,mustBeNonnegative} = 0;
+      % optional, can be used to record shorter shots
+      % see Acquire_Multi_FIFO_Data() and Allocate_Raw_Data()
+    shotsinBuffer(1,1)  {mustBeInteger,mustBeNonnegative} = 2048*10;
       % size of the FIFO buffer in shots
       % NOTE play with this for better performance if needed! (already made it larger...)
     dataType(1,1)       {mustBeInteger,mustBeNonnegative} = 0;
@@ -44,18 +50,26 @@ classdef FiFoSettings
   methods % normal methods
     % number of bytes to be acquired with the current settings
     function Set_shotsPerNotify(FiFo)
-      maxShotsPerNotify = round(FiFo.shotsinBuffer./5);
+      maxShotsPerNotify = round(FiFo.shotsinBuffer./20);
       possibleValues = [];
       for iShots = 1:maxShotsPerNotify
         notifySize = iShots*FiFo.shotByteSize; % in samples
+        goodNotifySize = ~mod(notifySize,4096); % needs to be div. by 4096
         nBlocks = FiFo.totalBytes./notifySize;
-        if ~mod(nBlocks,1)
+        integerBlocks = ~mod(nBlocks,1); % no block remainder...
+        if integerBlocks && goodNotifySize
           possibleValues = [possibleValues iShots];
         end
       end
-      FiFo.shotsPerNotify = max(possibleValues);
+      if isempty(max(possibleValues))
+        short_warn('Could not find suitable FiFo.shotsPerNotify!');
+        short_warn('Trying longer shots...');
+        FiFo.shotSize = FiFo.shotSize+16; % next higher allowed value...
+        FiFo.Set_shotsPerNotify();
+      else
+        FiFo.shotsPerNotify = max(possibleValues);
+      end
     end
-
   end
 
   % set / get functions
@@ -63,6 +77,15 @@ classdef FiFoSettings
     function postSamples = get.postSamples(FiFo)
       % see manual for description of pre/post trigger samples
       postSamples = FiFo.shotSize - FiFo.PRE_TRIGGER_SAMPLES; %% min allowed!
+    end
+
+    function shotSizePd = get.shotSizePd(FiFo)
+      if (FiFo.shotSizePd == 0)
+        % no special pd size defined, use normal shot size
+        shotSizePd = FiFo.shotSize;
+      else
+        shotSizePd = FiFo.shotSizePd;
+      end
     end
 
     function bufferSize = get.bufferSize(FiFo)
@@ -92,7 +115,8 @@ classdef FiFoSettings
     function nBlocks = get.nBlocks(FiFo)
       nBlocks = FiFo.totalBytes./FiFo.notifySize;
       if mod(nBlocks,1)
-        % short_warn('[DAQ.FiFo] nBlocks not an interger!');
+        short_warn('[DAQ.FiFo] nBlocks not an interger!');
+        nBlocks = floor(nBlocks); % we don't get the last shots...
       end
       % fprintf('nBlocks = %2.1f | %2.1f\n',nBlocks,nBlocksNew);
       % totalBytes = FiFo.shotSize*FiFo.BYTES_PER_SAMPLE*FiFo.nShots
