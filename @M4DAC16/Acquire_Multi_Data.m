@@ -3,7 +3,7 @@
 % Mail: hofmannu@student.ethz.ch
 % Date: 23. Nov 2018
 
-function acquiredData = Acquire_Multi_Data(dac)
+function varargout = Acquire_Multi_Data(dac)
 
   errorCode = spcm_dwSetParam_i32(...
       dac.cardInfo.hDrv, ...
@@ -35,6 +35,13 @@ function acquiredData = Acquire_Multi_Data(dac)
     end
   end
 
-  acquiredData = [Dat_Ch0; Dat_Ch1];
+  if nargout == 1
+    varargout{1} = [Dat_Ch0; Dat_Ch1];
+  elseif nargout == 2
+    varargout{1} = Dat_Ch0;
+    varargout{2} = Dat_Ch1;
+  else
+    error('Too many output arguments!');
+  end
 
 end
