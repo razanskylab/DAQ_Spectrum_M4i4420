@@ -4,25 +4,25 @@
 
 % Description: Opens the connection to the data acquisition card.
 
-function Open_Connection(dac)
+function Open_Connection(DAQ)
 
-  if dac.isConnected == 0
+  if DAQ.isConnected == 0
 
-    [success, dac.cardInfo] = spcMInitDevice(dac.cardPort);
+    [success, DAQ.cardInfo] = spcMInitDevice(DAQ.cardPort);
 
     % Check if opening was successfully
     if(success == 1)
-      dac.isConnected = 1;
-      if ~dac.beSilent
-        fprintf('[M4DAC16] Connection to DAQ established!\n');
+      DAQ.isConnected = 1;
+      if ~DAQ.beSilent
+        DAQ.VPrintF('[M4DAC16] Connection to DAQ established!\n');
       end
     else
-      dac.isConnected = 0;
-      spcMErrorMessageStdOut(dac.cardInfo, 'Error: Could not open card\n', true);
+      DAQ.isConnected = 0;
+      spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: Could not open card\n', true);
     end
 
   else
-    fprintf('[M4DAC16] Connection was already established.\n');
+    DAQ.VPrintF('[M4DAC16] Connection was already established.\n');
   end
 
 end

@@ -17,9 +17,9 @@ function Print_FiFo_Info(DAQ)
       F.notifySize*1e-6,F.shotsPerNotify);
 
   if (F.nShots > 1e6)
-    DAQ.VPrintF('   Total Mega-Shots: %2.2f\n',F.nShots*1e-6);
+    DAQ.VPrintF('   Total Shots: %2.2f M\n',F.nShots*1e-6);
   elseif (F.nShots > 1e3)
-    DAQ.VPrintF('   Total Kilo-Shots: %2.2f\n',F.nShots*1e-3);
+    DAQ.VPrintF('   Total Shots: %2.2f k\n',F.nShots*1e-3);
   else
     DAQ.VPrintF('   Total Shots: %2.0f\n',F.nShots);
   end

@@ -7,7 +7,7 @@
 
 function Setup_All_Channels(DAQ,channels)
   if ~DAQ.beSilent
-    fprintf('[M4DAC16] Setting up all channels.\n');
+    DAQ.VPrintF('[M4DAC16] Setting up all channels.\n');
   end
 
   % check if size of both arrays aggree
