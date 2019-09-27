@@ -2,7 +2,7 @@
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
-function Setup_Analog_Input_Channel(DAQ,channel,settings)
+function Setup_Analog_Input_Channel(DAQ, channel, settings)
   if ~DAQ.beSilent
     fprintf('[M4DAC16] Setting up channel %i.\n',channel);
   end

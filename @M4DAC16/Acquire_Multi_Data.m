@@ -21,12 +21,12 @@ function varargout = Acquire_Multi_Data(dac)
   else
     %fprintf (' Starting the DMA transfer and waiting until data is in PC memory ...\n');
     [errorCode, Dat_Ch0, Dat_Ch1] = ...
-    spcm_dwGetData( ...                   % returns channel data in order
-      dac.cardInfo.hDrv, ...              % physical address of card (?)
-      0, ...                     % offet start address
+    spcm_dwGetData(... % returns channel data in order
+      dac.cardInfo.hDrv, ... % physical address of card (?)
+      0, ... % offet start address
       dac.cardInfo.setMemsize, ... % length of buffer to read
-      dac.cardInfo.setChannels, ...                % number of analog channels
-      dac.dataType);                      % datatype to read
+      dac.cardInfo.setChannels, ... % number of analog channels
+      dac.dataType); % datatype to read
 
     if (errorCode ~= 0)
         [success, dac.cardInfo] = spcMCheckSetError (errorCode, dac.cardInfo);

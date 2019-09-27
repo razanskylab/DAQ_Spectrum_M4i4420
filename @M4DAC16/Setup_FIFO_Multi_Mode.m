@@ -2,9 +2,8 @@
 % Mail:     johannesrebling@gmail.com
 
 function Setup_FIFO_Multi_Mode(DAQ)
-  tic;
-  DAQ.PrintF('[M4DAC16] Preparing Multi-FiFo acquisition.\n');
 
+  DAQ.VPrintF('[M4DAC16] Preparing Multi-FiFo acquisition.\n');
 
   % SETUP FIFO SETTINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % spcMSetupModeRecFIFOMulti (DAQ.cardInfo, chEnableH, chEnableL, segmentSize, postSamples,segmentsToRec);
