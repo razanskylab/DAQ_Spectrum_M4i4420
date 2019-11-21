@@ -5,16 +5,16 @@
 
 % Description: Performs a software reset of the card
 
-function Reset(dac)
+function Reset(DAQ)
 
-	errorCode = spcm_dwSetParam_i32(dac.cardInfo.hDrv, dac.mRegs('SPC_M2CMD'), dac.mRegs('M2CMD_CARD_RESET'));
+	errorCode = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_CARD_RESET'));
 
 	if (errorCode ~= 0)
-		[success, cardInfo] = spcMCheckSetError (errorCode, cardInfo);
-    	spcMErrorMessageStdOut (cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+		[success, DAQ.cardInfo] = spcMCheckSetError (errorCode, DAQ.cardInfo);
+    	spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
 		error('Could not perform software reset.');
 	else
-    	fprintf('[M4DAC16] Software reset successfull.\n')
+    	DAQ.VPrintF('[M4DAC16] Software reset successfull.\n')
 	end
 
 end
