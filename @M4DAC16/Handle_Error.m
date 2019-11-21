@@ -4,10 +4,12 @@
 
 % Description:
 
-function Handle_Error(DAQ,errCode)
+function Handle_Error(DAQ, errCode)
   if (errCode ~= 0)
+
     [success, DAQ.cardInfo] = spcMCheckSetError(errCode, DAQ.cardInfo);
-    if errCode == 263
+
+    if (errCode == 263)
       short_warn('[M4DAC16] Timeout while waiting for a trigger!');
     elseif errCode == 259
       short_warn('[M4DAC16] Command sequence is not allowed!');
@@ -15,6 +17,7 @@ function Handle_Error(DAQ,errCode)
       errorMessage = ['DAQ Error: ' DAQ.Parse_Error_Code(errCode)];
       error(errorMessage);
     end
+    
     drawnow();
   end
 

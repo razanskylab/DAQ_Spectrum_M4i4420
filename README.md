@@ -1,7 +1,7 @@
 # @M4DAC16 Class
 
 ## Requirements
-- needs https://github.com/razanskylab/BaseHardwareClass
+- needs https://github.com/razanskylab/BaseHardwareClass to work
 
 ## Card used for programming and in example
 - Installed memory:  4096 MByte

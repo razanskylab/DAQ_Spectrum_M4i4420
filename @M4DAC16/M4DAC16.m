@@ -312,7 +312,7 @@ classdef M4DAC16<BaseHardwareClass
         end
 
         if rem(maxRate,samplingRate)
-          samplingRate = maxRate./floor(maxRate/samplingRate);
+          samplingRate = maxRate ./ floor(maxRate / samplingRate);
             % sets to next higher allowed sampling rate
           warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
           DAQ.Verbose_Warn(warnText);
