@@ -3,9 +3,7 @@
 % Mail: johannesrebling@gmail.com
 
 function Setup_Analog_Input_Channel(DAQ,channel,settings)
-  if ~DAQ.beSilent
-    fprintf('[M4DAC16] Setting up channel %i.\n',channel);
-  end
+  DAQ.VPrintF('[M4DAC16] Setting up channel %i.\n',channel);
 
   % input ranges of path 0 (Buffered):
     % 200 =   ± 200 mV calibrated input range

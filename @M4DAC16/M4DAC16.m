@@ -272,6 +272,8 @@ classdef M4DAC16<BaseHardwareClass
         warning('[M4DAC16] Delay is above maximum, reducing to 8589934576 samples');
         delay = 8589934576;
       else
+        % we have a valid trigger value, just make sure it's multiple
+        % integer of 16, as required by the daq
         delay = round(delay/16) * 16;
       end
 

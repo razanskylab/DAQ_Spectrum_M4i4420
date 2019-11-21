@@ -19,9 +19,7 @@
 
 function Setup_External_Trigger(DAQ,triggerSetup)
 
-  if ~DAQ.beSilent
-    fprintf('[M4DAC16] Setting up the external trigger.\n')
-  end
+  DAQ.VPrintF('[M4DAC16] Setting up the external trigger.\n')
 
   [setupFailed, DAQ.cardInfo] = spcMSetupTrigExternal(...
     DAQ.cardInfo, ...

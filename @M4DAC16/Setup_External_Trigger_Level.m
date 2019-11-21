@@ -19,12 +19,7 @@
 
 function Setup_External_Trigger_Level(DAQ,triggerSetup)
 
-  if ~DAQ.beSilent
-    fprintf('[M4DAC16] Setting up the external trigger level.\n')
-  end
-% spcMSetupTrigExternalLevel (cardInfo,
-  %   extMode, level0, level1, trigTerm, ACCoupling, pulsewidth, singleSrc, extLine)
-
+  DAQ.VPrintF('[M4DAC16] Setting up the external trigger level.\n')
 
   [success, DAQ.cardInfo] = spcMSetupTrigExternalLevel(...
     DAQ.cardInfo, ...
