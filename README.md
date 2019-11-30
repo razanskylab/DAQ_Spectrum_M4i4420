@@ -11,18 +11,3 @@
 - Library Version:   5.6 build 15415
 
 ## Notes
-- we use HF path only
-  - HF path, AC coupled, fixed 50 Ohm
-  - better bandwidth
-  - better noise characteristics (buffered offers +-200mV range but with ~67uV
-  noise compared to ~53uV noise for +/-500mV range in HF path)
-
-- default card settings for us:
-  - HF path
-  - AC coupled
-  - +-5V range
-
-## trigger
-- use ext1
-  - 10k Ohm termination
-  - trigger detection on rising and falling
