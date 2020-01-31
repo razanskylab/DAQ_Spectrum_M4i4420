@@ -74,11 +74,11 @@ classdef FiFoSettings < handle
       % maxShotsPerNotify = floor(FiFo.nShots ./ 20);
       
       % possible values for shots per notify
-      possibleValues = []; 
+%       possibleValues = []; 
 
       iShot = 1:maxShotsPerNotify; % define range of number of shots in one notify
       notifySize = iShot * FiFo.shotByteSize; % convert into byte
-      goodNotifySize = ~mod(notifySize, 4096); % check if multifold of 4096 byte
+      goodNotifySize = ~mod(notifySize, 4096); %#ok<*PROP> % check if multifold of 4096 byte
       integerBlocks = ~mod(FiFo.totalBytes, notifySize);
       possibleValues = (goodNotifySize & integerBlocks);
 
@@ -87,7 +87,7 @@ classdef FiFoSettings < handle
         FiFo.shotSize = FiFo.shotSize + 16;
         FiFo.Set_shotsPerNotify();
       else
-        FiFo.shotsPerNotify = max(iShot(possibleValues))
+        FiFo.shotsPerNotify = max(iShot(possibleValues));
       end
 
     end
@@ -127,7 +127,6 @@ classdef FiFoSettings < handle
       notifySize = FiFo.shotsPerNotify * FiFo.shotByteSize; % in bytes
       if notifySize > FiFo.bufferSize
         error('Fifo.notifySize > Fifo.bufferSize!');
-        notifySize = [];
       end
       if notifySize < FiFo.MIN_NOTIFY_SIZE
         notifySize = FiFo.MIN_NOTIFY_SIZE;
