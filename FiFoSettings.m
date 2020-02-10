@@ -11,9 +11,12 @@ classdef FiFoSettings < handle
     shotSizePd(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % optional, can be used to record shorter shots
       % see Acquire_Multi_FIFO_Data() and Allocate_Raw_Data()
-    shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 10;
+    shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 50;
+    % shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 10;
       % size of the FIFO buffer in shots
       % NOTE play with this for better performance if needed! (already made it larger...)
+      % NOTE 2: made it A LOT larger (was 80 Mb, now ~1.6 GB) to avoid buffer overrruns...
+      % still seems to work fine with small volumes as well...
     dataType(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % 0 = RAW (int16), 1 = float
     nChannels(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
