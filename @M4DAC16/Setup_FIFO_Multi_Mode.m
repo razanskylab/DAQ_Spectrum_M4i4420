@@ -3,7 +3,7 @@
 
 function Setup_FIFO_Multi_Mode(DAQ)
 
-  DAQ.VPrintF('[M4DAC16] Preparing Multi-FiFo acquisition.\n');
+  DAQ.VPrintF('[M4DAC16] Preparing Multi-FiFo acquisition...');
 
   % SETUP FIFO SETTINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % spcMSetupModeRecFIFOMulti (DAQ.cardInfo, chEnableH, chEnableL, segmentSize, postSamples,segmentsToRec);
@@ -53,5 +53,7 @@ function Setup_FIFO_Multi_Mode(DAQ)
     spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetupFIFOBuffer:\n\t', true);
     error(DAQ.cardInfo.errorText);
   end
+
+  DAQ.VPrintF('done!\n');
 
 end

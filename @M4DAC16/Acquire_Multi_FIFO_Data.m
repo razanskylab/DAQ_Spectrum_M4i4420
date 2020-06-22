@@ -31,7 +31,7 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
     pdSamples = [pdSamples rangeIdx];
   end
 
-  DAQ.VPrintF('[M4DAC16] Starting data acquisition!\n'); tic;
+  DAQ.VPrintF('[M4DAC16] Starting data acquisition!\n');
   cpb = prep_console_progress_bar(nBlocks);
   cpb.start();
   if nBlocks > 50
@@ -40,7 +40,6 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
     updateBlocks = 2;
   end
 
-  tic
   % do the actual data acquisition %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % this code is unrolled so we only calculate all the required variables once
   % instead of every for loop...it's not pretty but it's faster...
@@ -98,7 +97,7 @@ function [ch0,ch1,tsData] = Acquire_Multi_FIFO_Data(DAQ,ch0,ch1)
 
   DAQ.Free_FIFO_Buffer();
   DAQ.Stop();
-  DAQ.VPrintF('[M4DAC16] Data acquisition completed in %2.2f s!\n',toc);
+  DAQ.VPrintF('[M4DAC16] Data acquisition complete!\n');
 
   %% ---------------------------------------------------------------------------
   if (DAQ.triggerCount ~= DAQ.FiFo.nShots)

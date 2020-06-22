@@ -17,7 +17,7 @@
 % extLine
 % (0 is big sma, 1 is small MMCX connector)
 
-function Setup_External_Trigger(DAQ,triggerSetup)
+function Setup_External_Trigger(DAQ, triggerSetup)
 
   DAQ.VPrintF('[M4DAC16] Setting up the external trigger.\n')
 

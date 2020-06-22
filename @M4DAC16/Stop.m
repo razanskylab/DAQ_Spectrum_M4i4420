@@ -13,5 +13,5 @@ function Stop(DAQ)
     spcMErrorMessageStdOut(DAQ.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
     error(DAQ.cardInfo.errorText);
   end
-  DAQ.Done();
+  DAQ.VPrintF('done!\n');
 end

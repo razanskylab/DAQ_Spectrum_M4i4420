@@ -30,8 +30,6 @@ function [ch0, ch1, tsData] = Acquire_Multi_FIFO_Data_Minimal(DAQ)
   % precalculate the index of the shots/indicies we want here, and then used it
   % during the acquisition to save time
 
-  DAQ.VPrintF('[M4DAC16] Starting data acquisition!\n');
-
   if nBlocks > 50
     updateBlocks = round(nBlocks ./ 50); % update ~100 times
   else
@@ -59,7 +57,7 @@ function [ch0, ch1, tsData] = Acquire_Multi_FIFO_Data_Minimal(DAQ)
       case 1
         [errCode, ch0Block] = spcm_dwGetData(DAQ.cardInfo.hDrv, 0, ...
           samplesPerChannel, nCh, DAQ.FiFo.dataType);
-        ch0(:,DAQ.FiFo.currentShots) = reshape(ch0Block,shotSize,shotsPerNotify);
+        ch0(:,DAQ.FiFo.currentShots) = reshape(ch0Block, shotSize, shotsPerNotify);
       case 2
         [errCode, ch0Block, ch1Block] = spcm_dwGetData(DAQ.cardInfo.hDrv, 0, ...
           samplesPerChannel, nCh, DAQ.FiFo.dataType);
@@ -79,27 +77,23 @@ function [ch0, ch1, tsData] = Acquire_Multi_FIFO_Data_Minimal(DAQ)
   % poll last TS data here
   tsLastShots = DAQ.Poll_Time_Stamp_Data();
   tsData = [tsData tsLastShots];
-  tsData = single(tsData) ./ DAQ.samplingRate;
+  tsData = single(tsData) ./ single(DAQ.samplingRate);
 
   % done with actual data acquisition %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   if (errCode ~= 0)
-    warning(['Error occured during acquisition, error code: ', num2str(errCode), '.']);
+    txtMsg = ['Error occured during acquisition, error code: ', num2str(errCode), '.'];
+    warning(txtMsg);
   end
 
-  DAQ.VPrintF('[M4DAC16] Data acquisition completed in %2.2f s!\n',toc);
-
-  %% ---------------------------------------------------------------------------
   if (DAQ.triggerCount ~= DAQ.FiFo.nShots)
     warnText = sprintf('Trigger count: %i Expected shots: %i!\n',...
-      DAQ.triggerCount,DAQ.FiFo.nShots);
+      DAQ.triggerCount, DAQ.FiFo.nShots);
     DAQ.Verbose_Warn(warnText);
   end
 
   if forcedTriggers
-    warnText = sprintf('We forced %i trigger events!\n',forcedTriggers);
+    warnText = sprintf('We forced %i trigger events!\n', forcedTriggers);
     DAQ.Verbose_Warn(warnText);
   end
-
-  size(ch0);
 
 end

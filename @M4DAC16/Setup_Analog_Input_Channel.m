@@ -2,7 +2,7 @@
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
-function Setup_Analog_Input_Channel(DAQ,channel,settings)
+function Setup_Analog_Input_Channel(DAQ, channel, settings)
   DAQ.VPrintF('[M4DAC16] Setting up channel %i.\n',channel);
 
   % input ranges of path 0 (Buffered):

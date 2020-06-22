@@ -2,7 +2,6 @@
 
 function Free_FIFO_Buffer(DAQ)
 
-  tic;
   DAQ.VPrintF('[M4DAC16] Freeing FiFo buffer...');
   %% ---------------------------------------------------------------------------
   % free data buffer
@@ -21,5 +20,5 @@ function Free_FIFO_Buffer(DAQ)
     spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
     error(DAQ.cardInfo.errorText);
   end
-  DAQ.Done();
+  DAQ.VPrintF('done!\n');
 end

@@ -12,7 +12,7 @@
 %   - Add a function which checks the integrity of all passed arguments
 % - lots of other thigns ;-)
 
-classdef M4DAC16<BaseHardwareClass
+classdef M4DAC16 <BaseHardwareClass
 
   properties (Constant = true)
     NO_CHANNELS = 2;
@@ -40,41 +40,28 @@ classdef M4DAC16<BaseHardwareClass
   % Properties of data acquisition card
   properties
     cardInfo; % stores the informations about the card in a struct
-    FiFo = FiFoSettings(); % subclass for storing fifo settings
+    FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
 
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
     beSilent(1,1) {mustBeNumericOrLogical} = 0; % either 0 or 1
 
     % channel sensitivty can be 10000 / 5000 /
-    sensitivityPd(1,1) {mustBeNumeric} = 10000;
-    sensitivityUs(1,1) {mustBeNumeric} = 1000;
+    sensitivityPd(1, 1) {mustBeNumeric} = 10000;
+    sensitivityUs(1, 1) {mustBeNumeric} = 1000;
     % These variables are actually a dublicate of the channels.inputrange but we
     % want to use them as dummies to set only the sensitivity of the channels w/
     % o modifying the remaining parts
 
-    dataType(1,1) {mustBeNumeric} = 0;
+    dataType(1, 1) {mustBeNumeric} = 0;
     % 0: data are returned as 16 bit integer
     % 1: data are returned as voltage (single)
 
     % offset start address for data chunk to be read
     % NOTE ignored in FIFO mode
-    offset(1,1) {mustBeNumeric} = 0;
+    offset(1, 1) {mustBeNumeric} = 0;
 
-    channels = repmat( struct( ...
-      'path',         0, ... % 0=Buffered 1=HF input with fixed 50 ohm termination
-      'inputrange',   10000, ... %
-      'term',         1, ... % 1: 50 ohm termination, 0: 1MOhm termination
-      'acCpl',        0, ... % [1] AC coupling
-      'inputoffset',  0, ... % [0]
-      'bwLim',        0, ... % 0/1 [0] Anti aliasing filter (Bandwidth limit)
-      'diffinput',    0  ), 1, 2); % [0] diff input?
-
-    externalTrigger = struct(...
-      'extMode', 1, ... % 1 means rising edge, 4 = rising & falling
-      'trigTerm', 1, ... % flag, whether to terminate the trigger inout
-      'pulseWidth', 0, ... % pulsewidth for any external trigger source using a pulse counter
-      'singleSrc', 1, ... % necessary if multiple trigger lines are used
-      'extLine', 0); % defines the trigger line (0 is big sma, 1 is small MMCX connector)
+    channels(1, 2) Channel; % data acquisition channels
+    externalTrigger(1, 1) ExternalTrigger; % external trigger definition
 
     % spcMSetupTrigChannel (cardInfo, channel, trigMode, trigLevel0, trigLevel1, pulsewidth, trigOut, singleSrc)
     triggerChannel = struct(...
@@ -376,7 +363,7 @@ classdef M4DAC16<BaseHardwareClass
     % Setup external TTL trigger
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.externalTrigger(DAQ, externalTrigger)
-      DAQ.Setup_External_Trigger(externalTrigger);
+      DAQ.Setup_External_Trigger_Level(externalTrigger);
       DAQ.externalTrigger = externalTrigger;
     end
 
@@ -385,9 +372,7 @@ classdef M4DAC16<BaseHardwareClass
       DAQ.beSilent = beSilent;
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set datatype (0 --> 16 bit integer, 1 --> float)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.dataType(DAQ, dataType)
       if (dataType == 0)
         % 16 bit integer

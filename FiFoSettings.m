@@ -3,7 +3,7 @@ classdef FiFoSettings < handle
   properties
     nShots(1, 1) uint64 {mustBeInteger,mustBeNonnegative};
       % total number of shots acquired on both channels
-    shotSize(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 1024*1;
+    shotSize(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 1024 * 1;
       % size of a shot in samples
       % pratical lower limit is 512 for complicated fifo reasons related to
       % block size etc...can prob. be fixed if this ever becomes a limitation
@@ -87,7 +87,7 @@ classdef FiFoSettings < handle
         FiFo.shotSize = FiFo.shotSize + 16;
         FiFo.Set_shotsPerNotify();
       else
-        FiFo.shotsPerNotify = max(iShot(possibleValues))
+        FiFo.shotsPerNotify = max(iShot(possibleValues));
       end
 
     end
@@ -125,11 +125,11 @@ classdef FiFoSettings < handle
     function notifySize = get.notifySize(FiFo)
 
       notifySize = FiFo.shotsPerNotify * FiFo.shotByteSize; % in bytes
-      if notifySize > FiFo.bufferSize
+      if (notifySize > FiFo.bufferSize)
         error('Fifo.notifySize > Fifo.bufferSize!');
         notifySize = [];
       end
-      if notifySize < FiFo.MIN_NOTIFY_SIZE
+      if (notifySize < FiFo.MIN_NOTIFY_SIZE)
         notifySize = FiFo.MIN_NOTIFY_SIZE;
       end
     end
