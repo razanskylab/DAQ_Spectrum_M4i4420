@@ -164,7 +164,7 @@ classdef M4DAC16 <BaseHardwareClass
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Save function
-    function saveObj = saveobj(DAQ)
+    function saveObj = saveobj(~)
       saveObj = [];
     end
 
@@ -185,9 +185,9 @@ classdef M4DAC16 <BaseHardwareClass
     % Set/Get the timeout of the DAQ in ms
     function set.timeout(DAQ, to)
       % ----- set timeout -----
-      errorCode = spcm_dwSetParam_i32 (DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TIMEOUT'), to);
-      if (errorCode ~= 0)
-          [success, DAQ.cardInfo] = spcMCheckSetError (errorCode, DAQ.cardInfo);
+      errorCode = spcm_dwSetParam_i32 (DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TIMEOUT'), to); %#ok<*MCSUP>
+      if (errorCode ~= 0) 
+          [~, DAQ.cardInfo] = spcMCheckSetError (errorCode, DAQ.cardInfo);
           spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
           return;
       else

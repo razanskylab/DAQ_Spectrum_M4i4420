@@ -11,9 +11,12 @@ classdef FiFoSettings < handle
     shotSizePd(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % optional, can be used to record shorter shots
       % see Acquire_Multi_FIFO_Data() and Allocate_Raw_Data()
-    shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 10;
+    shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 50;
+    % shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 10;
       % size of the FIFO buffer in shots
       % NOTE play with this for better performance if needed! (already made it larger...)
+      % NOTE 2: made it A LOT larger (was 80 Mb, now ~1.6 GB) to avoid buffer overrruns...
+      % still seems to work fine with small volumes as well...
     dataType(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % 0 = RAW (int16), 1 = float
     nChannels(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
@@ -74,11 +77,11 @@ classdef FiFoSettings < handle
       % maxShotsPerNotify = floor(FiFo.nShots ./ 20);
       
       % possible values for shots per notify
-      possibleValues = []; 
+%       possibleValues = []; 
 
       iShot = 1:maxShotsPerNotify; % define range of number of shots in one notify
       notifySize = iShot * FiFo.shotByteSize; % convert into byte
-      goodNotifySize = ~mod(notifySize, 4096); % check if multifold of 4096 byte
+      goodNotifySize = ~mod(notifySize, 4096); %#ok<*PROP> % check if multifold of 4096 byte
       integerBlocks = ~mod(FiFo.totalBytes, notifySize);
       possibleValues = (goodNotifySize & integerBlocks);
 
@@ -127,7 +130,6 @@ classdef FiFoSettings < handle
       notifySize = FiFo.shotsPerNotify * FiFo.shotByteSize; % in bytes
       if (notifySize > FiFo.bufferSize)
         error('Fifo.notifySize > Fifo.bufferSize!');
-        notifySize = [];
       end
       if (notifySize < FiFo.MIN_NOTIFY_SIZE)
         notifySize = FiFo.MIN_NOTIFY_SIZE;
