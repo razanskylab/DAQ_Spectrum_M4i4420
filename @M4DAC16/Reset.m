@@ -14,7 +14,7 @@ function Reset(DAQ)
     	spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
 		error('Could not perform software reset.');
 	else
-    	DAQ.VPrintF('[M4DAC16] Software reset successfull.\n')
+    	DAQ.VPrintF_With_ID('Software reset successfull.\n')
 	end
 
 end

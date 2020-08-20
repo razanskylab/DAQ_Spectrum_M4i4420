@@ -14,7 +14,7 @@ function Open_Connection(DAQ)
     if(success == 1)
       DAQ.isConnected = 1;
       if ~DAQ.beSilent
-        DAQ.VPrintF('[M4DAC16] Connection to DAQ established!\n');
+        DAQ.VPrintF_With_ID('Connection to DAQ established!\n');
       end
     else
       DAQ.isConnected = 0;
@@ -22,7 +22,7 @@ function Open_Connection(DAQ)
     end
 
   else
-    DAQ.VPrintF('[M4DAC16] Connection was already established.\n');
+    DAQ.VPrintF_With_ID('Connection was already established.\n');
   end
 
 end

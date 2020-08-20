@@ -12,7 +12,7 @@
 %   - Add a function which checks the integrity of all passed arguments
 % - lots of other thigns ;-)
 
-classdef M4DAC16 <BaseHardwareClass
+classdef M4DAC16 < BaseHardwareClass
 
   properties (Constant = true)
     NO_CHANNELS = 2;
@@ -39,8 +39,7 @@ classdef M4DAC16 <BaseHardwareClass
 
   % Properties of data acquisition card
   properties
-    classId = '[DAC]'; % used for VPrintF_With_ID()
-    
+    classId = '[DAC]'; % used for VPrintF_With_ID_W   
     cardInfo; % stores the informations about the card in a struct
     FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
 
@@ -136,7 +135,8 @@ classdef M4DAC16 <BaseHardwareClass
 
         % DAQ.mRegs = spcMCreateRegMap();
         % DAQ.mErrors = spcMCreateErrorMap();
-
+        DAQ.VPrintF_With_ID('Connecting and setting up...');
+        DAQ.verboseOutput = false;
         DAQ.Open_Connection();
         DAQ.Reset(); % recommended by manual
 
@@ -158,9 +158,11 @@ classdef M4DAC16 <BaseHardwareClass
         %DAQ.delay = DAQ.delay;
         DAQ.samplingRate = DAQ.SAMPLING_RATE;
         DAQ.timeout = DAQ.TIME_OUT;
+        DAQ.verboseOutput = true;
+        DAQ.VPrintF('...done!\n');
 
       else
-        DAQ.VPrintF('[M4DAC16] Initialized but not connected yet.\n');
+        DAQ.VPrintF_With_ID('Initialized but not connected yet.\n');
       end
     end
 
@@ -193,7 +195,7 @@ classdef M4DAC16 <BaseHardwareClass
           spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
           return;
       else
-        DAQ.VPrintF('[M4DAC16] Timeout set to %2.0f s.\n',to/1000);
+        DAQ.VPrintF_With_ID('Timeout set to %2.0f s.\n',to/1000);
       end
     end
 
@@ -233,7 +235,7 @@ classdef M4DAC16 <BaseHardwareClass
     %---------------------------------------------------------------------------
     function set.sensitivityPd(DAQ, sensitivityPd)
       if ~DAQ.beSilent
-        DAQ.VPrintF('[M4DAC16] Setting channel 0 sensitivity.\n');
+        DAQ.VPrintF_With_ID('Setting channel 0 sensitivity.\n');
       end
       DAQ.channels(1).inputrange = sensitivityPd;
       DAQ.sensitivityPd = sensitivityPd;
@@ -242,7 +244,7 @@ classdef M4DAC16 <BaseHardwareClass
     %---------------------------------------------------------------------------
     function set.sensitivityUs(DAQ, sensitivityUs)
       if ~DAQ.beSilent
-        DAQ.VPrintF('[M4DAC16] Setting channel 1 sensitivity.\n');
+        DAQ.VPrintF_With_ID('Setting channel 1 sensitivity.\n');
       end
       DAQ.channels(2).inputrange = sensitivityUs;
       DAQ.sensitivityUs = sensitivityUs;
@@ -251,7 +253,7 @@ classdef M4DAC16 <BaseHardwareClass
     %---------------------------------------------------------------------------
     % setting delay of data acquisition card
     function set.delay(DAQ, delay)
-      DAQ.VPrintF(['[M4DAC16] Setting the delay to ', num2str(delay), ' samples.\n']);
+      DAQ.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
 
       % Check validity of delay
       if (delay < 0)
@@ -308,7 +310,7 @@ classdef M4DAC16 <BaseHardwareClass
         end
 
         if ~DAQ.beSilent
-          DAQ.VPrintF('[M4DAC16] Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
+          DAQ.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
         end
 
         [success, DAQ.cardInfo] = spcMSetupClockPLL(DAQ.cardInfo, samplingRate, 0);
@@ -343,7 +345,7 @@ classdef M4DAC16 <BaseHardwareClass
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.acquisitionMode(DAQ, acquisitionMode)
       if ~DAQ.beSilent
-        DAQ.VPrintF('[M4DAC16] Setting up data acquisistion mode.\n');
+        DAQ.VPrintF_With_ID('Setting up data acquisistion mode.\n');
       end
 
       DAQ.acquisitionMode = acquisitionMode;
@@ -380,13 +382,13 @@ classdef M4DAC16 <BaseHardwareClass
         % 16 bit integer
         DAQ.dataType = 0;
         if ~DAQ.beSilent
-          DAQ.VPrintF('[M4DAC16] Setting the datatype to 16 bit integer.\n');
+          DAQ.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
         end
       elseif (dataType == 1)
         % voltage as single
         DAQ.dataType = 1;
         if ~DAQ.beSilent
-          DAQ.VPrintF('[M4DAC16] Setting the datatype to voltage.\n');
+          DAQ.VPrintF_With_ID('Setting the datatype to voltage.\n');
         end
       else
         % invalid argument

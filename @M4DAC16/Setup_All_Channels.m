@@ -7,7 +7,7 @@
 
 function Setup_All_Channels(DAQ,channels)
   if ~DAQ.beSilent
-    DAQ.VPrintF('[M4DAC16] Setting up all channels.\n');
+    DAQ.VPrintF_With_ID('Setting up all channels.\n');
   end
 
   % check if size of both arrays aggree
@@ -25,11 +25,11 @@ function Setup_All_Channels(DAQ,channels)
           channels(i+1).diffinput); % diffInput
 
       if (success == 0)
-        error(['[M4DAC16] Could not set channel ', num2str(i), '.']);
+        error(['[DAC] Could not set channel ', num2str(i), '.']);
       end
     end
   else
-    error('[M4DAC16] Number of channels have to aggree.');
+    error('[DAC] Number of channels have to aggree.');
   end
 
 end
