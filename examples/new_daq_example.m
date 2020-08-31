@@ -1,5 +1,3 @@
-[TriggerSettings, PdSettings, UsSettings] = default_daq_settings();
-
 DAQ = M4DAC16(0); % not connected jet, just created DAQ object
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,4 +27,4 @@ DAQ.Enable_Trigger(); % can be with start (Full_Start) or after but NOT before
 usRaw = zeros(DAQ.FiFo.shotSize,DAQ.FiFo.nShots,'int16');
 pdRaw = zeros(DAQ.FiFo.shotSizePd,DAQ.FiFo.nShots,'int16');
 
-[usRaw,pdRaw] = DAQ.Acquire_Multi_FIFO_Data(usRaw,pdRaw);
+% [usRaw,pdRaw] = DAQ.Acquire_Multi_FIFO_Data(usRaw,pdRaw);

@@ -38,7 +38,7 @@ function Setup_Analog_Input_Channel(DAQ, channel, settings)
 
     if ~success
       spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcMSetupInputChannel:\n\t', true);
-      error(['[M4DAC16] Could not set channel ', num2str(i), '.']);
+      error(['[M4DAC16] Could not set channel ', num2str(channel), '.']);
     end
   else
     error('[M4DAC16] Number of channels have to aggree.');
