@@ -1,28 +1,28 @@
-% File: Open_Connection.m @ FastDAQ
+% File: Open_Connection.m @ FastObj
 % Author: Urs Hofmann
 % Mail: hofmannu@student.ethz.ch
 
 % Description: Opens the connection to the data acquisition card.
 
-function Open_Connection(DAQ)
+function Open_Connection(Obj)
 
-  if DAQ.isConnected == 0
+  if Obj.isConnected == 0
 
-    [success, DAQ.cardInfo] = spcMInitDevice(DAQ.cardPort);
+    [success, Obj.cardInfo] = spcMInitDevice(Obj.cardPort);
 
     % Check if opening was successfully
     if(success == 1)
-      DAQ.isConnected = 1;
-      if ~DAQ.beSilent
-        DAQ.VPrintF_With_ID('Connection to DAQ established!\n');
+      Obj.isConnected = 1;
+      if ~Obj.beSilent
+        Obj.VPrintF_With_ID('Connection to Obj established!\n');
       end
     else
-      DAQ.isConnected = 0;
-      spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: Could not open card\n', true);
+      Obj.isConnected = 0;
+      spcMErrorMessageStdOut(Obj.cardInfo, 'Error: Could not open card\n', true);
     end
 
   else
-    DAQ.VPrintF_With_ID('Connection was already established.\n');
+    Obj.VPrintF_With_ID('Connection was already established.\n');
   end
 
 end

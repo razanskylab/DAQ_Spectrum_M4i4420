@@ -1,17 +1,17 @@
-% File: Stop.m @ FastDAQ
+% File: Stop.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
 % Description: Stops the board manually.
 
-function Stop(DAQ)
+function Stop(Obj)
   tic;
-  DAQ.VPrintF('[M4DAC16] Stopping card...');
-  errCode = spcm_dwSetParam_i32 (DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'),DAQ.mRegs('M2CMD_CARD_STOP'));
+  Obj.VPrintF_With_ID('Stopping card...');
+  errCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'),Obj.mRegs('M2CMD_CARD_STOP'));
   if (errCode ~= 0)
-    [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut(DAQ.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
-    error(DAQ.cardInfo.errorText);
+    [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+    spcMErrorMessageStdOut(Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
+    error(Obj.cardInfo.errorText);
   end
-  DAQ.VPrintF('done!\n');
+  Obj.Done();
 end

@@ -1,23 +1,23 @@
-% File: Setup_All_Channels.m @ FastDAQ
+% File: Setup_All_Channels.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
 % NOTE adapted from Urs
 % FIXME Does not set the input path, should be replaced with spcMSetupAnalogPathInputCh
 
-function Setup_All_Channels(DAQ,channels)
-  if ~DAQ.beSilent
-    DAQ.VPrintF_With_ID('Setting up all channels.\n');
+function Setup_All_Channels(Obj,channels)
+  if ~Obj.beSilent
+    Obj.VPrintF_With_ID('Setting up all channels.\n');
   end
 
   % check if size of both arrays aggree
-  if (size(channels) == size(DAQ.channels))
+  if (size(channels) == size(Obj.channels))
 
     % Set all channels
-    for (i= 0 : (DAQ.NO_CHANNELS - 1))
-      [success, DAQ.cardInfo] = ...
+    for (i= 0 : (Obj.NO_CHANNELS - 1))
+      [success, Obj.cardInfo] = ...
         spcMSetupAnalogInputChannel(...
-          DAQ.cardInfo, ...
+          Obj.cardInfo, ...
           i, ... % channel
           channels(i+1).inputrange, ... % input range in mV
           channels(i+1).term, ... % term

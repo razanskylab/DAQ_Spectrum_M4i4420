@@ -5,19 +5,20 @@
 
 % Description: Closes the connection to the data acquisition card.
 
-function Close_Connection(dac)
+function Close_Connection(Obj)
 
   % Check if card was opened before (requirement to close card)
-  if(dac.isConnected == 1)
-    spcMCloseCard(dac.cardInfo);
+  if(Obj.isConnected == 1)
+    spcMCloseCard(Obj.cardInfo);
 
-    if ~dac.beSilent
-      fprintf('[M4DAC16] Connection to DAQ closed.\n');
+    if ~Obj.beSilent
+      Obj.VPrintF_With_ID('Connection to DAQ closed.\n');
     end
 
-    dac.isConnected = 0;
+    Obj.isConnected = 0;
   else
-    short_warn('[M4DAC16] Cannot close connection to card, it was not opened.');
+    Obj.VPrintF_With_ID('');
+    short_warn('Cannot close connection to card, it was not opened.');
   end
 
 end

@@ -1,4 +1,4 @@
-% File: Setup_External_Trigger.m @ FastDAQ
+% File: Setup_External_Trigger.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -17,12 +17,12 @@
 % extLine
 % (0 is big sma, 1 is small MMCX connector)
 
-function Setup_External_Trigger(DAQ, triggerSetup)
+function Setup_External_Trigger(Obj, triggerSetup)
 
-  DAQ.VPrintF('[M4DAC16] Setting up the external trigger.\n')
+  Obj.VPrintF_With_ID('Setting up the external trigger.\n')
 
-  [setupFailed, DAQ.cardInfo] = spcMSetupTrigExternal(...
-    DAQ.cardInfo, ...
+  [setupFailed, Obj.cardInfo] = spcMSetupTrigExternal(...
+    Obj.cardInfo, ...
     triggerSetup.extMode, ...  % 40510 = SPC_TRIG_EXT0_MODE
     triggerSetup.trigTerm, ... % 40110 = SPC_TRIG_TERM
     triggerSetup.pulseWidth, ... % 44210 = SPC_TRIG_EXT0_PULSEWIDTH
@@ -30,7 +30,7 @@ function Setup_External_Trigger(DAQ, triggerSetup)
     triggerSetup.extLine); %  % defines the trigger line (0 is big sma, 1 is small MMCX connector)
 
   if setupFailed
-    short_warn('[M4DAC16] Could not set up the external trigger correctly.');
+    short_warn('   Could not set up the external trigger correctly.');
   end
 
 end

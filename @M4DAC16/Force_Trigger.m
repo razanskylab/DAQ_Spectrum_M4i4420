@@ -1,4 +1,4 @@
-% File: Force_Trigger.m @ FastDAQ
+% File: Force_Trigger.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -8,11 +8,11 @@
   % software trigger"
 % see also Start() Stop() Enable_Trigger() Force_Trigger()
 
-function Force_Trigger(DAQ)
-  errCode = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_CARD_FORCETRIGGER'));
+function Force_Trigger(Obj)
+  errCode = spcm_dwSetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_FORCETRIGGER'));
   if (errCode ~= 0)
-    [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut (DAQ.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
-    error(DAQ.cardInfo.errorText);
+    [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+    spcMErrorMessageStdOut (Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
+    error(Obj.cardInfo.errorText);
   end
 end

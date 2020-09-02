@@ -1,4 +1,4 @@
-% File: Start.m @ FastDAQ
+% File: Start.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -7,13 +7,16 @@
   % writes all settings to the card if any of the settings has been changed
   % since the last one was written. After card has been started none of the
   % settings can be changed while the card is running"
-% see also Start() Stop() Enable_Trigger() Force_Trigger()
+% see also Stop() Enable_Trigger() Force_Trigger()
 
-function Start(DAQ)
-  errCode = spcm_dwSetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_CARD_START'));
+function Start(Obj)
+  tic;
+  Obj.VPrintF_With_ID('Starting (trigger not enabled!)...');
+  errCode = spcm_dwSetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_START'));
   if (errCode ~= 0)
-    [~, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut (DAQ.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
-    error(DAQ.cardInfo.errorText);
+    [~, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+    spcMErrorMessageStdOut (Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
+    error(Obj.cardInfo.errorText);
   end
+  Obj.Done();
 end

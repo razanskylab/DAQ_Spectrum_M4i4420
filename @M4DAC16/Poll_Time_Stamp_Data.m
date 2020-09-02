@@ -1,4 +1,4 @@
-% File: Poll_Time_Stamp_Data.m @ FastDAQ
+% File: Poll_Time_Stamp_Data.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -7,9 +7,9 @@
 % has been acquired, this function polls that last bit of data
 % also used in the Get_Next_Fifo_Block function to keep things clean
 
-function [tsDataBlock] = Poll_Time_Stamp_Data(DAQ)
-  nTimeStamps = DAQ.tsBytesAvailable/8; % 1 Timestamp = 8 Byte
+function [tsDataBlock] = Poll_Time_Stamp_Data(Obj)
+  nTimeStamps = Obj.tsBytesAvailable/8; % 1 Timestamp = 8 Byte
   % ----- get available timestamps -----
-  [errCode, tsDataBlock] = spcm_dwGetTimestampData(DAQ.cardInfo.hDrv, nTimeStamps);
+  [errCode, tsDataBlock] = spcm_dwGetTimestampData(Obj.cardInfo.hDrv, nTimeStamps);
   tsDataBlock = tsDataBlock(1:2:end); % get only lowwer 8-bytes
 end

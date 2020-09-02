@@ -1,9 +1,10 @@
-% File: Setup_Channel.m @ FastDAQ
+% File: Setup_Channel.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
-function Setup_Analog_Input_Channel(DAQ, channel, settings)
-  DAQ.VPrintF('[M4DAC16] Setting up channel %i.\n',channel);
+function Setup_Analog_Input_Channel(Obj, channel, settings)
+  tic;
+  Obj.VPrintF_With_ID('Setting up channel %i.\n',channel);
 
   % input ranges of path 0 (Buffered):
     % 200 =   ± 200 mV calibrated input range
@@ -25,9 +26,9 @@ function Setup_Analog_Input_Channel(DAQ, channel, settings)
   % end
 
   % make sure we try to set channel that actually exist...
-  if channel <= DAQ.cardInfo.maxChannels-1
-    [success, DAQ.cardInfo] = spcMSetupAnalogPathInputCh(...
-                                  DAQ.cardInfo, ...
+  if channel <= Obj.cardInfo.maxChannels-1
+    [success, Obj.cardInfo] = spcMSetupAnalogPathInputCh(...
+                                  Obj.cardInfo, ...
                                   channel,                      ... % channel
                                   settings.path,   ... % input range in mV
                                   settings.inputrange,   ... % input range in mV
@@ -37,8 +38,10 @@ function Setup_Analog_Input_Channel(DAQ, channel, settings)
                                   0);       % diffInput
 
     if ~success
-      spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcMSetupInputChannel:\n\t', true);
+      spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcMSetupInputChannel:\n\t', true);
       error(['[M4DAC16] Could not set channel ', num2str(channel), '.']);
+    else
+      Obj.Done();
     end
   else
     error('[M4DAC16] Number of channels have to aggree.');

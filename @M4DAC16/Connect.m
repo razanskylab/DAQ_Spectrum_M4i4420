@@ -1,12 +1,12 @@
-% File: Connect.m @ FastDAQ
+% File: Connect.m @ FastObj
 % Mail: johannesrebling@gmail.com
 
 % Description: convenience function to have unified syntax
-function Connect(DAQ)
-  DAQ.Open_Connection();
-  DAQ.Reset();
+function Connect(Obj)
+  Obj.Open_Connection();
+  Obj.Reset();
 
-  % channels = DAQ.channels();
+  % channels = Obj.channels();
   %
   % channels(1).inputrange = 10000; % [mV]
   % channels(1).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
@@ -18,10 +18,10 @@ function Connect(DAQ)
   % channels(2).inputoffset = 0;
   % channels(2).diffinput = 0;
   %
-  % DAQ.channels = channels;
-  % DAQ.externalTrigger = DAQ.externalTrigger;
-  % DAQ.acquisitionMode = DAQ.acquisitionMode;
-  % DAQ.delay = DAQ.delay;
-  % DAQ.samplingRate = DAQ.SAMPLING_RATE;
-  DAQ.timeout = DAQ.TIME_OUT;
+  % Obj.channels = channels;
+  % Obj.externalTrigger = Obj.externalTrigger;
+  % Obj.acquisitionMode = Obj.acquisitionMode;
+  % Obj.delay = Obj.delay;
+  % Obj.samplingRate = Obj.SAMPLING_RATE;
+  Obj.timeout = Obj.TIME_OUT;
 end

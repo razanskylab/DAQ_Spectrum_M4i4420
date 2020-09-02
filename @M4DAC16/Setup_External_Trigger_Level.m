@@ -1,4 +1,4 @@
-% File: Setup_External_Trigger_Level.m @ FastDAQ
+% File: Setup_External_Trigger_Level.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -17,12 +17,12 @@
 % extLine
 % (0 is big sma, 1 is small MMCX connector)
 
-function Setup_External_Trigger_Level(DAQ,triggerSetup)
+function Setup_External_Trigger_Level(Obj,triggerSetup)
 
-  DAQ.VPrintF('[M4DAC16] Setting up the external trigger level.\n')
+  Obj.VPrintF_With_ID('Setting up the external trigger level.\n')
 
-  [success, DAQ.cardInfo] = spcMSetupTrigExternalLevel(...
-    DAQ.cardInfo, ...
+  [success, Obj.cardInfo] = spcMSetupTrigExternalLevel(...
+    Obj.cardInfo, ...
     triggerSetup.extMode, ...  % 40510 = SPC_TRIG_EXT0_MODE
     triggerSetup.extLevel, ...  % 42320 = SPC_TRIG_EXT0_LEVEL0
     triggerSetup.extLevel, ...  % 42330 = SPC_TRIG_EXT0_LEVEL1

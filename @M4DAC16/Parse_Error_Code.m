@@ -5,7 +5,7 @@
 
 % Description: Prases Spectrum DAC error codes.
 
-function errorMessage = Parse_Error_Code(DAQ, errCode)
+function errorMessage = Parse_Error_Code(~, errCode)
   
   switch errCode
     case 2147483648

@@ -1,13 +1,14 @@
-function errorCode = Start_Multi_Mode(dac)
+function errorCode = Start_Multi_Mode(Obj)
 
-  commandMask = bitor (dac.mRegs('M2CMD_CARD_START'), dac.mRegs('M2CMD_CARD_ENABLETRIGGER'));
+  short_warn('Use of Start_Multi_Mode() deprecated, use Start and Enable_Trigger()!');
+  commandMask = bitor (Obj.mRegs('M2CMD_CARD_START'), Obj.mRegs('M2CMD_CARD_ENABLETRIGGER'));
   errorCode = spcm_dwSetParam_i32(...
-      dac.cardInfo.hDrv, ...
-      dac.mRegs('SPC_M2CMD'), ...
+      Obj.cardInfo.hDrv, ...
+      Obj.mRegs('SPC_M2CMD'), ...
       commandMask);  % 100 = SPC_M2CMD
   if (errorCode ~= 0)
-    [success, cardInfo] = spcMCheckSetError (errorCode, dac.cardInfo);
-    spcMErrorMessageStdOut (dac.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+    [~, ~] = spcMCheckSetError (errorCode, Obj.cardInfo);
+    spcMErrorMessageStdOut (Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
     return;
   end
 

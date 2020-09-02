@@ -1,4 +1,4 @@
-% File: Enable_Trigger.m @ FastDAQ
+% File: Enable_Trigger.m @ FastObj
 % Author: Johannes Reblimg
 % Mail: johannesrebling@gmail.com
 
@@ -9,12 +9,15 @@
   % some external hardware has been started."
 % see also Start() Stop() Enable_Trigger() Force_Trigger()
 
-function Enable_Trigger(DAQ)
+function Enable_Trigger(Obj)
+  tic;
+  Obj.VPrintF_With_ID('Enabling trigger input...');
   errCode = spcm_dwSetParam_i32(...
-  	DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_M2CMD'), DAQ.mRegs('M2CMD_CARD_ENABLETRIGGER'));
+  	Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_ENABLETRIGGER'));
   if (errCode ~= 0)
-    [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-    spcMErrorMessageStdOut (DAQ.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
-    error(DAQ.cardInfo.errorText);
+    [~, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+    spcMErrorMessageStdOut (Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
+    error(Obj.cardInfo.errorText);
   end
+  Obj.Done();
 end

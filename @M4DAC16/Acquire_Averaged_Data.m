@@ -9,11 +9,11 @@
 
 % Changelog: Switched from memorySamples to nSamples
 
-function [acquiredAveragedData, acquiredData] = Acquire_Averaged_Data(dac, nAverages)
+function [acquiredAveragedData, acquiredData] = Acquire_Averaged_Data(Obj, nAverages)
 
-  acquiredData = zeros(nAverages, 2, dac.acquisitionMode.nSamples);
+  acquiredData = zeros(nAverages, 2, Obj.acquisitionMode.nSamples);
   for iAverage = 1:nAverages
-    acquiredData(iAverage, :, :) = dac.Acquire_Data();
+    acquiredData(iAverage, :, :) = Obj.Acquire_Data();
   end
 
   acquiredAveragedData = squeeze(mean(acquiredData,1));

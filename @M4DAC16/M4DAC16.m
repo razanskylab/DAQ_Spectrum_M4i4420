@@ -1,4 +1,4 @@
-% File: FastDAQ.m
+% File: FastObj.m
 % Author: Urs Hofmann
 % Date: 03. Jan 2018
 % Mail: hofmannu@student.ethz.ch
@@ -102,7 +102,7 @@ classdef M4DAC16 < BaseHardwareClass
   properties
     samplingRate(1,1) {mustBeInteger,mustBeNonnegative}; % [Hz]
     timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
-    delay(1,1) {mustBeInteger,mustBeNonnegative}; % DAQ trigger delay in samples
+    delay(1,1) {mustBeInteger,mustBeNonnegative}; % Obj trigger delay in samples
   end
 
   properties (Dependent = true)
@@ -118,9 +118,9 @@ classdef M4DAC16 < BaseHardwareClass
   methods
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Constructor
-    function DAQ = M4DAC16(doConnect)
+    function Obj = M4DAC16(doConnect)
       if nargin == 0
-        doConnect = DAQ.CONNECT_ON_STARTUP;
+        doConnect = Obj.CONNECT_ON_STARTUP;
       end
 
       if doConnect
@@ -133,14 +133,14 @@ classdef M4DAC16 < BaseHardwareClass
         % ). Here we are only going to initialize them. For that we have to write
         % the properties once to the card using the set functions
 
-        % DAQ.mRegs = spcMCreateRegMap();
-        % DAQ.mErrors = spcMCreateErrorMap();
-        DAQ.VPrintF_With_ID('Connecting and setting up...');
-        DAQ.verboseOutput = false;
-        DAQ.Open_Connection();
-        DAQ.Reset(); % recommended by manual
+        % Obj.mRegs = spcMCreateRegMap();
+        % Obj.mErrors = spcMCreateErrorMap();
+        Obj.VPrintF_With_ID('Connecting and setting up...');
+        Obj.verboseOutput = false;
+        Obj.Open_Connection();
+        Obj.Reset(); % recommended by manual
 
-        channels = DAQ.channels();
+        channels = Obj.channels();
 
         channels(1).inputrange = 10000; % [mV]
         channels(1).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
@@ -152,17 +152,17 @@ classdef M4DAC16 < BaseHardwareClass
         channels(2).inputoffset = 0;
         channels(2).diffinput = 0;
 
-        DAQ.channels = channels;
-        %DAQ.externalTrigger = DAQ.externalTrigger;
-        %DAQ.acquisitionMode = DAQ.acquisitionMode;
-        %DAQ.delay = DAQ.delay;
-        DAQ.samplingRate = DAQ.SAMPLING_RATE;
-        DAQ.timeout = DAQ.TIME_OUT;
-        DAQ.verboseOutput = true;
-        DAQ.VPrintF('...done!\n');
+        Obj.channels = channels;
+        %Obj.externalTrigger = Obj.externalTrigger;
+        %Obj.acquisitionMode = Obj.acquisitionMode;
+        %Obj.delay = Obj.delay;
+        Obj.samplingRate = Obj.SAMPLING_RATE;
+        Obj.timeout = Obj.TIME_OUT;
+        Obj.verboseOutput = true;
+        Obj.VPrintF('...done!\n');
 
       else
-        DAQ.VPrintF_With_ID('Initialized but not connected yet.\n');
+        Obj.VPrintF_With_ID('Initialized but not connected yet.\n');
       end
     end
 
@@ -174,9 +174,9 @@ classdef M4DAC16 < BaseHardwareClass
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Destructor
-    function delete(DAQ)
-      if DAQ.isConnected
-        DAQ.Close_Connection();
+    function delete(Obj)
+      if Obj.isConnected
+        Obj.Close_Connection();
       end
     end
   end
@@ -186,32 +186,32 @@ classdef M4DAC16 < BaseHardwareClass
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods
     %---------------------------------------------------------------------------
-    % Set/Get the timeout of the DAQ in ms
-    function set.timeout(DAQ, to)
+    % Set/Get the timeout of the Obj in ms
+    function set.timeout(Obj, to)
       % ----- set timeout -----
-      errorCode = spcm_dwSetParam_i32 (DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TIMEOUT'), to); %#ok<*MCSUP>
+      errorCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, Obj.mRegs('SPC_TIMEOUT'), to); %#ok<*MCSUP>
       if (errorCode ~= 0) 
-          [~, DAQ.cardInfo] = spcMCheckSetError (errorCode, DAQ.cardInfo);
-          spcMErrorMessageStdOut (DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+          [~, Obj.cardInfo] = spcMCheckSetError (errorCode, Obj.cardInfo);
+          spcMErrorMessageStdOut (Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
           return;
       else
-        DAQ.VPrintF_With_ID('Timeout set to %2.0f s.\n',to/1000);
+        Obj.VPrintF_With_ID('Timeout set to %2.0f s.\n',to/1000);
       end
     end
 
-    function timeOut = get.timeout(DAQ)
-      [err, timeOut] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TIMEOUT'));
+    function timeOut = get.timeout(Obj)
+      [err, timeOut] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_TIMEOUT'));
       if err
-        DAQ.Verbose_Warn('Could not read timeOut!');
+        Obj.Verbose_Warn('Could not read timeOut!');
         timeOut = [];
       end
     end
 
     %---------------------------------------------------------------------------
-    function set.triggerChannel(DAQ, tc)
+    function set.triggerChannel(Obj, tc)
       warning('Not tested yet.');
 
-      [success, DAQ.cardInfo] = spcMSetupTrigChannel(DAQ.cardInfo, ...
+      [success, Obj.cardInfo] = spcMSetupTrigChannel(Obj.cardInfo, ...
         tc.channel, ... % channel used
         tc.trigMode, ... % trigger mode
         tc.trigLevel0, ...
@@ -223,7 +223,7 @@ classdef M4DAC16 < BaseHardwareClass
       if ~success
         error('Somthing went wrong while setting up the channel based trigger.');
       else
-        DAQ.triggerChannel = tc;
+        Obj.triggerChannel = tc;
       end
     end
 
@@ -233,27 +233,27 @@ classdef M4DAC16 < BaseHardwareClass
     % verytime we want to modify only the sensitivity
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %---------------------------------------------------------------------------
-    function set.sensitivityPd(DAQ, sensitivityPd)
-      if ~DAQ.beSilent
-        DAQ.VPrintF_With_ID('Setting channel 0 sensitivity.\n');
+    function set.sensitivityPd(Obj, sensitivityPd)
+      if ~Obj.beSilent
+        Obj.VPrintF_With_ID('Setting channel 0 sensitivity.\n');
       end
-      DAQ.channels(1).inputrange = sensitivityPd;
-      DAQ.sensitivityPd = sensitivityPd;
+      Obj.channels(1).inputrange = sensitivityPd;
+      Obj.sensitivityPd = sensitivityPd;
     end
 
     %---------------------------------------------------------------------------
-    function set.sensitivityUs(DAQ, sensitivityUs)
-      if ~DAQ.beSilent
-        DAQ.VPrintF_With_ID('Setting channel 1 sensitivity.\n');
+    function set.sensitivityUs(Obj, sensitivityUs)
+      if ~Obj.beSilent
+        Obj.VPrintF_With_ID('Setting channel 1 sensitivity.\n');
       end
-      DAQ.channels(2).inputrange = sensitivityUs;
-      DAQ.sensitivityUs = sensitivityUs;
+      Obj.channels(2).inputrange = sensitivityUs;
+      Obj.sensitivityUs = sensitivityUs;
     end
 
     %---------------------------------------------------------------------------
     % setting delay of data acquisition card
-    function set.delay(DAQ, delay)
-      DAQ.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
+    function set.delay(Obj, delay)
+      Obj.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
 
       % Check validity of delay
       if (delay < 0)
@@ -264,20 +264,20 @@ classdef M4DAC16 < BaseHardwareClass
         delay = 8589934576;
       else
         % we have a valid trigger value, just make sure it's multiple
-        % integer of 16, as required by the daq
+        % integer of 16, as required by the Obj
         delay = round(delay/16) * 16;
       end
 
       % set delay
       errorCode = spcm_dwSetParam_i32(...
-        DAQ.cardInfo.hDrv, ...
-        DAQ.mRegs('SPC_TRIG_DELAY'), ... % defines the delay for the detected trigger events
+        Obj.cardInfo.hDrv, ...
+        Obj.mRegs('SPC_TRIG_DELAY'), ... % defines the delay for the detected trigger events
         delay); % delay in samples
 
       if (errorCode ~= 0)
         error(['[M4DAC16] Could not set delay: ', errorCode]);
       else
-        DAQ.delay = delay;
+        Obj.delay = delay;
       end
     end
 
@@ -286,18 +286,18 @@ classdef M4DAC16 < BaseHardwareClass
     %---------------------------------------------------------------------------
     % Function to set sample rate of data acquisition card, takes care that we
     % do not exceed max and min limits and that we have an open connection
-    function set.samplingRate(DAQ, samplingRate)
-      maxRate = DAQ.cardInfo.maxSamplerate;
+    function set.samplingRate(Obj, samplingRate)
+      maxRate = Obj.cardInfo.maxSamplerate;
 
-      if (DAQ.isConnected == 0)
-        DAQ.Verbose_Warn('[M4DAC16] No open connection.');
+      if (Obj.isConnected == 0)
+        Obj.Verbose_Warn('[M4DAC16] No open connection.');
       else
-        if (samplingRate < DAQ.cardInfo.minSamplerate)
-          DAQ.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
-            DAQ.cardInfo.minSamplerate);
-          samplingRate = DAQ.cardInfo.minSamplerate;
+        if (samplingRate < Obj.cardInfo.minSamplerate)
+          Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
+            Obj.cardInfo.minSamplerate);
+          samplingRate = Obj.cardInfo.minSamplerate;
         elseif (samplingRate > maxRate)
-          DAQ.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
+          Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
             maxRate);
           samplingRate = maxRate;
         end
@@ -306,21 +306,21 @@ classdef M4DAC16 < BaseHardwareClass
           samplingRate = maxRate ./ floor(maxRate / samplingRate);
             % sets to next higher allowed sampling rate
           warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
-          DAQ.Verbose_Warn(warnText);
+          Obj.Verbose_Warn(warnText);
         end
 
-        if ~DAQ.beSilent
-          DAQ.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
+        if ~Obj.beSilent
+          Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
         end
 
-        [success, DAQ.cardInfo] = spcMSetupClockPLL(DAQ.cardInfo, samplingRate, 0);
+        [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
 
         if ~success
           error(['[M4DAC16] Could not set the sampling rate:\n', ...
-            DAQ.cardInfo.errorText]);
-          DAQ.samplingRate = [];
+            Obj.cardInfo.errorText]);
+          Obj.samplingRate = [];
         else
-          DAQ.samplingRate = samplingRate;
+          Obj.samplingRate = samplingRate;
         end
       end
     end
@@ -330,12 +330,12 @@ classdef M4DAC16 < BaseHardwareClass
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Setting up the analog input channels, all at once. There will be a second
-    % function named set.channel(DAQ, channel, id_channel) which can be used to
+    % function named set.channel(Obj, channel, id_channel) which can be used to
     % set up a single channel
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function set.channels(DAQ, channels)
-      DAQ.Setup_All_Channels(channels);
-      DAQ.channels = channels;
+    function set.channels(Obj, channels)
+      Obj.Setup_All_Channels(channels);
+      Obj.channels = channels;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -343,52 +343,52 @@ classdef M4DAC16 < BaseHardwareClass
     % unctions are only used with the genertor or I/O cards. It is onlz possible
     % to use one generation mode at a time.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function set.acquisitionMode(DAQ, acquisitionMode)
-      if ~DAQ.beSilent
-        DAQ.VPrintF_With_ID('Setting up data acquisistion mode.\n');
+    function set.acquisitionMode(Obj, acquisitionMode)
+      if ~Obj.beSilent
+        Obj.VPrintF_With_ID('Setting up data acquisistion mode.\n');
       end
 
-      DAQ.acquisitionMode = acquisitionMode;
+      Obj.acquisitionMode = acquisitionMode;
 
-      [success, DAQ.cardInfo] = spcMSetupModeRecStdSingle(...
-        DAQ.cardInfo,...
-        DAQ.acquisitionMode.chMaskH, ...
-        DAQ.acquisitionMode.chMaskL, ...
-        DAQ.acquisitionMode.nSamples, ...
-        DAQ.acquisitionMode.postSamples);
+      [success, Obj.cardInfo] = spcMSetupModeRecStdSingle(...
+        Obj.cardInfo,...
+        Obj.acquisitionMode.chMaskH, ...
+        Obj.acquisitionMode.chMaskL, ...
+        Obj.acquisitionMode.nSamples, ...
+        Obj.acquisitionMode.postSamples);
 
       if (success == 0)
           error(['[M4DAC16] Error while setting up data acquisisiton mode: ', ...
-            DAQ.cardInfo.errorText]);
+            Obj.cardInfo.errorText]);
       end
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Setup external TTL trigger
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function set.externalTrigger(DAQ, externalTrigger)
-      DAQ.Setup_External_Trigger_Level(externalTrigger);
-      DAQ.externalTrigger = externalTrigger;
+    function set.externalTrigger(Obj, externalTrigger)
+      Obj.Setup_External_Trigger_Level(externalTrigger);
+      Obj.externalTrigger = externalTrigger;
     end
 
-    function set.beSilent(DAQ, beSilent)
-      DAQ.verboseOutput = beSilent;
-      DAQ.beSilent = beSilent;
+    function set.beSilent(Obj, beSilent)
+      Obj.verboseOutput = beSilent;
+      Obj.beSilent = beSilent;
     end
 
     % Set datatype (0 --> 16 bit integer, 1 --> float)
-    function set.dataType(DAQ, dataType)
+    function set.dataType(Obj, dataType)
       if (dataType == 0)
         % 16 bit integer
-        DAQ.dataType = 0;
-        if ~DAQ.beSilent
-          DAQ.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
+        Obj.dataType = 0;
+        if ~Obj.beSilent
+          Obj.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
         end
       elseif (dataType == 1)
         % voltage as single
-        DAQ.dataType = 1;
-        if ~DAQ.beSilent
-          DAQ.VPrintF_With_ID('Setting the datatype to voltage.\n');
+        Obj.dataType = 1;
+        if ~Obj.beSilent
+          Obj.VPrintF_With_ID('Setting the datatype to voltage.\n');
         end
       else
         % invalid argument
@@ -396,45 +396,51 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    function triggerCount = get.triggerCount(DAQ)
-      [errCode, triggerCount] = spcm_dwGetParam_i64(DAQ.cardInfo.hDrv, 200905);
+    function triggerCount = get.triggerCount(Obj)
+      [errCode, triggerCount] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, 200905);
         % 200905 = SPC_TRIGGERCOUNTER
       if errCode
-        DAQ.Verbose_Warn('Could not read triggerCount!');
-        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
+        Obj.Verbose_Warn('Could not read triggerCount!');
+        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        Obj.Verbose_Warn(Obj.cardInfo.errorText);
         triggerCount = [];
       end
     end
 
-    function bytesAvailable = get.bytesAvailable(DAQ)
-      [errCode, bytesAvailable] = spcm_dwGetParam_i64(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_DATA_AVAIL_USER_LEN'));
+    function bytesAvailable = get.bytesAvailable(Obj)
+      [errCode, bytesAvailable] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, Obj.mRegs('SPC_DATA_AVAIL_USER_LEN'));
         % 200905 = SPC_TRIGGERCOUNTER
       if errCode
-        DAQ.Verbose_Warn('Could not read bytesAvailable!');
-        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
+        Obj.Verbose_Warn('Could not read bytesAvailable!');
+        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        Obj.Verbose_Warn(Obj.cardInfo.errorText);
         bytesAvailable = [];
       end
     end
 
-    function tsBytesAvailable = get.tsBytesAvailable(DAQ)
-      [errCode, tsBytesAvailable] = spcm_dwGetParam_i32(DAQ.cardInfo.hDrv, DAQ.mRegs('SPC_TS_AVAIL_USER_LEN'));
+    function tsBytesAvailable = get.tsBytesAvailable(Obj)
+      [errCode, tsBytesAvailable] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_TS_AVAIL_USER_LEN'));
         % 200905 = SPC_TRIGGERCOUNTER
       if errCode
-        DAQ.Verbose_Warn('Could not read tsBytesAvailable!');
-        [success, DAQ.cardInfo] = spcMCheckSetError (errCode, DAQ.cardInfo);
-        spcMErrorMessageStdOut(DAQ.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        DAQ.Verbose_Warn(DAQ.cardInfo.errorText);
+        Obj.Verbose_Warn('Could not read tsBytesAvailable!');
+        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
+        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+        Obj.Verbose_Warn(Obj.cardInfo.errorText);
         tsBytesAvailable = [];
       end
     end
 
-    function currentError = get.currentError(DAQ)
-      [currentError, errorReg, errorVal, DAQ.cardInfo.errorText] = ...
-        spcm_dwGetErrorInfo_i32(DAQ.cardInfo.hDrv);
+    function currentError = get.currentError(Obj)
+      [currentError, errorReg, errorVal, Obj.cardInfo.errorText] = ...
+        spcm_dwGetErrorInfo_i32(Obj.cardInfo.hDrv);
+    end
+
+    % auto-setup multimode when setting multi-mode settings...
+    function set.multiMode(Obj, newMultimodeSettings)
+      Obj.multiMode = newMultimodeSettings;
+      Obj.Setup_Multi_Mode();
     end
   end
 end
