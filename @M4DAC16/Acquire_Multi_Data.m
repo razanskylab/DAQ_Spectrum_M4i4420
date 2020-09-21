@@ -4,7 +4,7 @@
 % Date: 23. Nov 2018
 
 function varargout = Acquire_Multi_Data(Obj)
-
+  tic;
   Obj.VPrintF_With_ID('Reading back multi-data...');
   errorCode = spcm_dwSetParam_i32(...
       Obj.cardInfo.hDrv, ...

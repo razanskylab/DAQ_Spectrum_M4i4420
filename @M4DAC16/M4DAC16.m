@@ -39,7 +39,7 @@ classdef M4DAC16 < BaseHardwareClass
 
   % Properties of data acquisition card
   properties
-    classId = '[DAC]'; % used for VPrintF_With_ID_W   
+    classId = '[DAQ]'; % used for VPrintF_With_ID_W   
     cardInfo; % stores the informations about the card in a struct
     FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
 
