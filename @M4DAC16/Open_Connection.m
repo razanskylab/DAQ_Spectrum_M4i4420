@@ -13,9 +13,7 @@ function Open_Connection(Obj)
     % Check if opening was successfully
     if(success == 1)
       Obj.isConnected = 1;
-      if ~Obj.beSilent
-        Obj.VPrintF_With_ID('Connection to Obj established!\n');
-      end
+      Obj.VPrintF_With_ID('Connection to Obj established!\n');
     else
       Obj.isConnected = 0;
       spcMErrorMessageStdOut(Obj.cardInfo, 'Error: Could not open card\n', true);

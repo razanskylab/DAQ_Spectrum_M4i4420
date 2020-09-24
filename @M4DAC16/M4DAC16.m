@@ -41,17 +41,9 @@ classdef M4DAC16 < BaseHardwareClass
   properties
     classId = '[DAQ]'; % used for VPrintF_With_ID_W   
     cardInfo; % stores the informations about the card in a struct
+
     FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
-
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
-    beSilent(1,1) {mustBeNumericOrLogical} = 0; % either 0 or 1
-
-    % channel sensitivty can be 10000 / 5000 /
-    sensitivityPd(1, 1) {mustBeNumeric} = 10000;
-    sensitivityUs(1, 1) {mustBeNumeric} = 1000;
-    % These variables are actually a dublicate of the channels.inputrange but we
-    % want to use them as dummies to set only the sensitivity of the channels w/
-    % o modifying the remaining parts
 
     dataType(1, 1) {mustBeNumeric} = 0;
     % 0: data are returned as 16 bit integer
@@ -60,8 +52,6 @@ classdef M4DAC16 < BaseHardwareClass
     % offset start address for data chunk to be read
     % NOTE ignored in FIFO mode
     offset(1, 1) {mustBeNumeric} = 0;
-
-    channels(1, 2) Channel; % data acquisition channels
     externalTrigger(1, 1) ExternalTrigger; % external trigger definition
 
     % spcMSetupTrigChannel (cardInfo, channel, trigMode, trigLevel0, trigLevel1, pulsewidth, trigOut, singleSrc)
@@ -110,6 +100,7 @@ classdef M4DAC16 < BaseHardwareClass
     tsBytesAvailable; % available time stamp bytes
     bytesAvailable; % available time stamp bytes
     currentError;
+    sensitivity; % sensitivty of DAQ channel(s) read back from DAQ
   end
 
 
@@ -124,38 +115,11 @@ classdef M4DAC16 < BaseHardwareClass
       end
 
       if doConnect
-        % UH: not needed any more since the files are already in the correct folder. Furthermore
-        % the library under the path below was not complete
-        % add path to lib files, needs to be on Matlab file path
-        % addpath(genpath('C:\Hardware_Libs\M4DAC16\'));
-
-        % Default settings are defined in the properties section (despite channels
-        % ). Here we are only going to initialize them. For that we have to write
-        % the properties once to the card using the set functions
-
-        % Obj.mRegs = spcMCreateRegMap();
-        % Obj.mErrors = spcMCreateErrorMap();
         Obj.VPrintF_With_ID('Connecting and setting up...');
         Obj.verboseOutput = false;
         Obj.Open_Connection();
         Obj.Reset(); % recommended by manual
 
-        channels = Obj.channels();
-
-        channels(1).inputrange = 10000; % [mV]
-        channels(1).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
-        channels(1).inputoffset = 0;
-        channels(1).diffinput = 0;
-
-        channels(2).inputrange = 10000; % [mV]
-        channels(2).term = 1; % 1: 50 ohm termination, 0: 1MOhm termination
-        channels(2).inputoffset = 0;
-        channels(2).diffinput = 0;
-
-        Obj.channels = channels;
-        %Obj.externalTrigger = Obj.externalTrigger;
-        %Obj.acquisitionMode = Obj.acquisitionMode;
-        %Obj.delay = Obj.delay;
         Obj.samplingRate = Obj.SAMPLING_RATE;
         Obj.timeout = Obj.TIME_OUT;
         Obj.verboseOutput = true;
@@ -232,22 +196,18 @@ classdef M4DAC16 < BaseHardwareClass
     % r channel settings. With this we do not have to define the whole channel e
     % verytime we want to modify only the sensitivity
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %---------------------------------------------------------------------------
-    function set.sensitivityPd(Obj, sensitivityPd)
-      if ~Obj.beSilent
-        Obj.VPrintF_With_ID('Setting channel 0 sensitivity.\n');
+    function sensitivity = get.sensitivity(Obj)
+      sensitivity = zeros(1,Obj.NO_CHANNELS);
+      for iCh = 1:Obj.NO_CHANNELS
+        chStr = sprintf('SPC_AMP%i',iCh-1);
+        [errCode, tempSens] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, Obj.mRegs(chStr));
+        if errCode 
+          sensitivity(iCh) = NaN;
+          short_warn(sprintf('Failed to read sensitivity of channel %i!',iCh-1));
+        else
+          sensitivity(iCh) = tempSens;
+        end
       end
-      Obj.channels(1).inputrange = sensitivityPd;
-      Obj.sensitivityPd = sensitivityPd;
-    end
-
-    %---------------------------------------------------------------------------
-    function set.sensitivityUs(Obj, sensitivityUs)
-      if ~Obj.beSilent
-        Obj.VPrintF_With_ID('Setting channel 1 sensitivity.\n');
-      end
-      Obj.channels(2).inputrange = sensitivityUs;
-      Obj.sensitivityUs = sensitivityUs;
     end
 
     %---------------------------------------------------------------------------
@@ -309,9 +269,7 @@ classdef M4DAC16 < BaseHardwareClass
           Obj.Verbose_Warn(warnText);
         end
 
-        if ~Obj.beSilent
-          Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
-        end
+        Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
 
         [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
 
@@ -327,26 +285,13 @@ classdef M4DAC16 < BaseHardwareClass
 
     % FIXME add get samplingRate!
 
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Setting up the analog input channels, all at once. There will be a second
-    % function named set.channel(Obj, channel, id_channel) which can be used to
-    % set up a single channel
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function set.channels(Obj, channels)
-      Obj.Setup_All_Channels(channels);
-      Obj.channels = channels;
-    end
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Generation mode setup: defines the generation mode for the next run. The f
     % unctions are only used with the genertor or I/O cards. It is onlz possible
     % to use one generation mode at a time.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function set.acquisitionMode(Obj, acquisitionMode)
-      if ~Obj.beSilent
-        Obj.VPrintF_With_ID('Setting up data acquisistion mode.\n');
-      end
+      Obj.VPrintF_With_ID('Setting up data acquisistion mode.\n');
 
       Obj.acquisitionMode = acquisitionMode;
 
@@ -371,25 +316,16 @@ classdef M4DAC16 < BaseHardwareClass
       Obj.externalTrigger = externalTrigger;
     end
 
-    function set.beSilent(Obj, beSilent)
-      Obj.verboseOutput = beSilent;
-      Obj.beSilent = beSilent;
-    end
-
     % Set datatype (0 --> 16 bit integer, 1 --> float)
     function set.dataType(Obj, dataType)
       if (dataType == 0)
         % 16 bit integer
         Obj.dataType = 0;
-        if ~Obj.beSilent
-          Obj.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
-        end
+        Obj.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
       elseif (dataType == 1)
         % voltage as single
         Obj.dataType = 1;
-        if ~Obj.beSilent
-          Obj.VPrintF_With_ID('Setting the datatype to voltage.\n');
-        end
+        Obj.VPrintF_With_ID('Setting the datatype to voltage.\n');
       else
         % invalid argument
         error('[M4DAC16] You passed an invalid option as dataType.');

@@ -11,9 +11,7 @@ function Close_Connection(Obj)
   if(Obj.isConnected == 1)
     spcMCloseCard(Obj.cardInfo);
 
-    if ~Obj.beSilent
-      Obj.VPrintF_With_ID('Connection to DAQ closed.\n');
-    end
+    Obj.VPrintF_With_ID('Connection to DAQ closed.\n');
 
     Obj.isConnected = 0;
   else
