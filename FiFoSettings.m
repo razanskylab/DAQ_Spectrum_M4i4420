@@ -69,7 +69,8 @@ classdef FiFoSettings < handle
     function Set_shotsPerNotify(FiFo)
       % target notify size at which we get best performance
       % 1024 kiB
-      targetSize = 1024*1e3; % [Bytes]
+      % targetSize = 1024*1e3; % [Bytes]
+      targetSize = 8192*1e3; % [Bytes]
       nShotsPerNotify = targetSize ./ FiFo.shotByteSize; 
         % for 512 - 2048 samples, nShotsPerNotify will be 125 - 500 shots
       % maxShotsPerNotify = round(FiFo.shotsinBuffer ./ 10);
@@ -86,7 +87,7 @@ classdef FiFoSettings < handle
         FiFo.Set_shotsPerNotify();
       else
         FiFo.shotsPerNotify = max(iShot(possibleValues));
-        FiFo.shotsinBuffer = FiFo.shotsPerNotify * 10; 
+        FiFo.shotsinBuffer = FiFo.shotsPerNotify * 20; 
           % as per SPECTRUM for best performance would be 4*notifysize BUT
           % that can easily cause a buffer overflow
       end
