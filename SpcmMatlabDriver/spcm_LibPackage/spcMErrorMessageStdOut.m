@@ -15,7 +15,7 @@ function spcMErrorMessageStdOut (cardInfo, message, printCardErr)
     fprintf (message);
 
     if (printCardErr == true)
-        fprintf([cardInfo.errorText '\n']);
+        fprintf(2,[cardInfo.errorText '\n']);
     end
 
     if (cardInfo.hDrv ~= 0)

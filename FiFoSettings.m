@@ -41,6 +41,7 @@ classdef FiFoSettings < handle
   properties (Dependent = true)
     postSamples(1,1) uint64 {mustBeInteger,mustBeNonnegative};
     bufferSize(1,1) uint64 {mustBeInteger,mustBeNonnegative}; % [byte]
+      % NOTE buffer size = 4 * Notifysize for best performance
     
     % size which will be transfered after each notify event
     notifySize(1,1) uint64 {mustBeInteger,mustBeNonnegative}; % [byte]
@@ -65,21 +66,15 @@ classdef FiFoSettings < handle
 
   methods % normal methods
 
-    % number of bytes to be acquired with the current settings
-    
-
     function Set_shotsPerNotify(FiFo)
-      
-      maxShotsPerNotify = round(FiFo.shotsinBuffer ./ 10);
-      
-      % max shots per notify: maximum number of shots which should be used as *basis* for
-      % notify size
-      % maxShotsPerNotify = floor(FiFo.nShots ./ 20);
-      
-      % possible values for shots per notify
-%       possibleValues = []; 
+      % target notify size at which we get best performance
+      % 1024 kiB
+      targetSize = 1024*1e3; % [Bytes]
+      nShotsPerNotify = targetSize ./ FiFo.shotByteSize; 
+        % for 512 - 2048 samples, nShotsPerNotify will be 125 - 500 shots
+      % maxShotsPerNotify = round(FiFo.shotsinBuffer ./ 10);
 
-      iShot = 1:maxShotsPerNotify; % define range of number of shots in one notify
+      iShot = 1:(nShotsPerNotify*5); % define range of number of shots in one notify
       notifySize = iShot * FiFo.shotByteSize; % convert into byte
       goodNotifySize = ~mod(notifySize, 4096); %#ok<*PROP> % check if multifold of 4096 byte
       integerBlocks = ~mod(FiFo.totalBytes, notifySize);
@@ -91,6 +86,9 @@ classdef FiFoSettings < handle
         FiFo.Set_shotsPerNotify();
       else
         FiFo.shotsPerNotify = max(iShot(possibleValues));
+        FiFo.shotsinBuffer = FiFo.shotsPerNotify * 10; 
+          % as per SPECTRUM for best performance would be 4*notifysize BUT
+          % that can easily cause a buffer overflow
       end
 
     end
@@ -115,6 +113,7 @@ classdef FiFoSettings < handle
 
     % buffer size in samples, might have effect on performance but should
     % otherwise not be overly relevant
+    % according to Spectrum, this should be 4 * notify size...
     function bufferSize = get.bufferSize(FiFo)
       bufferSize = FiFo.shotsinBuffer * FiFo.shotSize * FiFo.BYTES_PER_SAMPLE;  % in samples
     end
@@ -126,7 +125,6 @@ classdef FiFoSettings < handle
     % multiple of 4 kByte. For data transfer it may also be a fraction of 4k
     % in the range of 16, 32, 64, 128, 256, 512, 1k or 2k
     function notifySize = get.notifySize(FiFo)
-
       notifySize = FiFo.shotsPerNotify * FiFo.shotByteSize; % in bytes
       if (notifySize > FiFo.bufferSize)
         error('Fifo.notifySize > Fifo.bufferSize!');
@@ -189,12 +187,6 @@ classdef FiFoSettings < handle
       currentShots = shotStart:shotEnd;
     end
 
-  end
-
-  methods % set/get functions to check valid configuration
-    % function postSamples = get.postSamples(FiFo)
-    %   postSamples = FiFo.shotSize - 16; %% min allowed!
-    % end
   end
 
 end

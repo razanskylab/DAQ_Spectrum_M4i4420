@@ -9,9 +9,7 @@ function Stop(Obj)
   Obj.VPrintF_With_ID('Stopping card...');
   errCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'),Obj.mRegs('M2CMD_CARD_STOP'));
   if (errCode ~= 0)
-    [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
-    spcMErrorMessageStdOut(Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
-    error(Obj.cardInfo.errorText);
+    error(Obj.mErrorKeys(errCode));
   end
   Obj.Done();
 end

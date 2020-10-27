@@ -6,16 +6,14 @@
 
 function Open_Connection(Obj)
 
-  if Obj.isConnected == 0
+  if ~Obj.isConnected
 
     [success, Obj.cardInfo] = spcMInitDevice(Obj.cardPort);
 
     % Check if opening was successfully
-    if(success == 1)
-      Obj.isConnected = 1;
-      Obj.VPrintF_With_ID('Connection to Obj established!\n');
+    if (success)
+      Obj.VPrintF_With_ID('Connection established!\n');
     else
-      Obj.isConnected = 0;
       spcMErrorMessageStdOut(Obj.cardInfo, 'Error: Could not open card\n', true);
     end
 

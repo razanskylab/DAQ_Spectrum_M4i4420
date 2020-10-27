@@ -12,7 +12,7 @@
 function [success, cardInfo] = spcMCheckSetError(error, cardInfo)
   if error ~= 0
     cardInfo.setError = true;
-    [errorCode, errorReg, errorVal, cardInfo.errorText] = ...
+    [~, ~, ~, cardInfo.errorText] = ...
       spcm_dwGetErrorInfo_i32(cardInfo.hDrv);
     success = false;
   else

@@ -159,7 +159,7 @@ function errorMessage = Parse_Error_Code(~, errCode)
     case 65535
       errorMessage = 'ERR_INTERNAL_ERROR';
     otherwise
-      errorMessage = 'Unknown error code';
+      errorMessage = sprintf('%i is an unknown error code!',errCode);
   end
   
 end

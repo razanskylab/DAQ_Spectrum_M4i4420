@@ -33,14 +33,14 @@ classdef M4DAC16 < BaseHardwareClass
     TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
   end
 
-  properties (SetAccess = private)
-    isConnected(1,1) {mustBeNumericOrLogical} = 0;
+  properties (Dependent)
+    isConnected(1,1) {mustBeNumericOrLogical};
   end
 
   % Properties of data acquisition card
   properties
     classId = '[DAQ]'; % used for VPrintF_With_ID_W   
-    cardInfo; % stores the informations about the card in a struct
+    cardInfo = []; % stores the informations about the card in a struct
 
     FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
@@ -119,7 +119,6 @@ classdef M4DAC16 < BaseHardwareClass
         Obj.verboseOutput = false;
         Obj.Open_Connection();
         Obj.Reset(); % recommended by manual
-
         Obj.samplingRate = Obj.SAMPLING_RATE;
         Obj.timeout = Obj.TIME_OUT;
         Obj.verboseOutput = true;
@@ -152,7 +151,6 @@ classdef M4DAC16 < BaseHardwareClass
     %---------------------------------------------------------------------------
     % Set/Get the timeout of the Obj in ms
     function set.timeout(Obj, to)
-      % ----- set timeout -----
       errorCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, Obj.mRegs('SPC_TIMEOUT'), to); %#ok<*MCSUP>
       if (errorCode ~= 0) 
           [~, Obj.cardInfo] = spcMCheckSetError (errorCode, Obj.cardInfo);
@@ -163,13 +161,20 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    function timeOut = get.timeout(Obj)
-      [err, timeOut] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_TIMEOUT'));
-      if err
-        Obj.Verbose_Warn('Could not read timeOut!');
-        timeOut = [];
+    %---------------------------------------------------------------------------
+    function timeout = get.timeout(Obj)
+      timeout = [];
+      if Obj.isConnected
+        [errCode, timeout] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_TIMEOUT'));
+        if errCode
+          Obj.Verbose_Warn('Could not read timeout!');
+          Obj.Handle_Error();
+          timeOut = NaN; 
+        end
       end
     end
+    
 
     %---------------------------------------------------------------------------
     function set.triggerChannel(Obj, tc)
@@ -183,7 +188,6 @@ classdef M4DAC16 < BaseHardwareClass
         tc.pulsewidth, ...
         tc.trigOut, ...
         tc.singleSrc);
-
       if ~success
         error('Somthing went wrong while setting up the channel based trigger.');
       else
@@ -191,11 +195,11 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Function which only modifies the channel sensitivity w/o touching any othe
-    % r channel settings. With this we do not have to define the whole channel e
-    % verytime we want to modify only the sensitivity
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %---------------------------------------------------------------------------
+    function isConnected = get.isConnected(Obj)
+      isConnected = ~isempty(Obj.cardInfo) && ~(Obj.cardInfo.hDrv == 0);
+    end
+
     function sensitivity = get.sensitivity(Obj)
       sensitivity = zeros(1,Obj.NO_CHANNELS);
       for iCh = 1:Obj.NO_CHANNELS
@@ -241,15 +245,13 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    % FIXME add get delay!
-
     %---------------------------------------------------------------------------
     % Function to set sample rate of data acquisition card, takes care that we
     % do not exceed max and min limits and that we have an open connection
     function set.samplingRate(Obj, samplingRate)
       maxRate = Obj.cardInfo.maxSamplerate;
 
-      if (Obj.isConnected == 0)
+      if ~Obj.isConnected
         Obj.Verbose_Warn('[M4DAC16] No open connection.');
       else
         if (samplingRate < Obj.cardInfo.minSamplerate)
@@ -274,22 +276,16 @@ classdef M4DAC16 < BaseHardwareClass
         [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
 
         if ~success
+          Obj.samplingRate = NaN;
           error(['[M4DAC16] Could not set the sampling rate:\n', ...
             Obj.cardInfo.errorText]);
-          Obj.samplingRate = [];
         else
           Obj.samplingRate = samplingRate;
         end
       end
     end
 
-    % FIXME add get samplingRate!
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Generation mode setup: defines the generation mode for the next run. The f
-    % unctions are only used with the genertor or I/O cards. It is onlz possible
-    % to use one generation mode at a time.
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %---------------------------------------------------------------------------
     function set.acquisitionMode(Obj, acquisitionMode)
       Obj.VPrintF_With_ID('Setting up data acquisistion mode.\n');
 
@@ -308,14 +304,13 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Setup external TTL trigger
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %---------------------------------------------------------------------------
     function set.externalTrigger(Obj, externalTrigger)
       Obj.Setup_External_Trigger_Level(externalTrigger);
       Obj.externalTrigger = externalTrigger;
     end
 
+    %---------------------------------------------------------------------------
     % Set datatype (0 --> 16 bit integer, 1 --> float)
     function set.dataType(Obj, dataType)
       if (dataType == 0)
@@ -332,47 +327,55 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
+    %---------------------------------------------------------------------------
     function triggerCount = get.triggerCount(Obj)
-      [errCode, triggerCount] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, 200905);
-        % 200905 = SPC_TRIGGERCOUNTER
-      if errCode
-        Obj.Verbose_Warn('Could not read triggerCount!');
-        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
-        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        Obj.Verbose_Warn(Obj.cardInfo.errorText);
-        triggerCount = [];
+      triggerCount = [];
+      if Obj.isConnected
+        [errCode, triggerCount] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_TRIGGERCOUNTER'));
+        if errCode
+          Obj.Verbose_Warn('Could not read triggerCount!');
+          Obj.Handle_Error();
+          triggerCount = NaN; 
+        end
       end
     end
 
+    %---------------------------------------------------------------------------
     function bytesAvailable = get.bytesAvailable(Obj)
-      [errCode, bytesAvailable] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, Obj.mRegs('SPC_DATA_AVAIL_USER_LEN'));
-        % 200905 = SPC_TRIGGERCOUNTER
-      if errCode
-        Obj.Verbose_Warn('Could not read bytesAvailable!');
-        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
-        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        Obj.Verbose_Warn(Obj.cardInfo.errorText);
-        bytesAvailable = [];
+      bytesAvailable = [];
+      if Obj.isConnected
+        [errCode, bytesAvailable] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_DATA_AVAIL_USER_LEN'));
+        if errCode
+          Obj.Verbose_Warn('Could not read bytesAvailable (SPC_DATA_AVAIL_USER_LEN)!');
+          Obj.Handle_Error();
+          bytesAvailable = NaN; 
+        end
       end
     end
 
+    %---------------------------------------------------------------------------
     function tsBytesAvailable = get.tsBytesAvailable(Obj)
-      [errCode, tsBytesAvailable] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_TS_AVAIL_USER_LEN'));
-        % 200905 = SPC_TRIGGERCOUNTER
-      if errCode
-        Obj.Verbose_Warn('Could not read tsBytesAvailable!');
-        [success, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
-        spcMErrorMessageStdOut(Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-        Obj.Verbose_Warn(Obj.cardInfo.errorText);
-        tsBytesAvailable = [];
+      tsBytesAvailable = [];
+      if Obj.isConnected
+        [errCode, tsBytesAvailable] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_TS_AVAIL_USER_LEN'));
+        if errCode
+          Obj.Verbose_Warn('Could not read tsBytesAvailable (SPC_TS_AVAIL_USER_LEN)!');
+          Obj.Handle_Error();
+          tsBytesAvailable = NaN; 
+        end
       end
     end
-
+    
+    %---------------------------------------------------------------------------
     function currentError = get.currentError(Obj)
-      [currentError, errorReg, errorVal, Obj.cardInfo.errorText] = ...
+      [currentError, ~, ~, Obj.cardInfo.errorText] = ...
         spcm_dwGetErrorInfo_i32(Obj.cardInfo.hDrv);
     end
 
+    %---------------------------------------------------------------------------
     % auto-setup multimode when setting multi-mode settings...
     function set.multiMode(Obj, newMultimodeSettings)
       Obj.multiMode = newMultimodeSettings;

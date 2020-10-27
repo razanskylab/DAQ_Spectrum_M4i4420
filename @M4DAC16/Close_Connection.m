@@ -8,12 +8,10 @@
 function Close_Connection(Obj)
 
   % Check if card was opened before (requirement to close card)
-  if(Obj.isConnected == 1)
+  if (Obj.isConnected)
     spcMCloseCard(Obj.cardInfo);
-
+    Obj.cardInfo = [];
     Obj.VPrintF_With_ID('Connection to DAQ closed.\n');
-
-    Obj.isConnected = 0;
   else
     Obj.VPrintF_With_ID('');
     short_warn('Cannot close connection to card, it was not opened.');
