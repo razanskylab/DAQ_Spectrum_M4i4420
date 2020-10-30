@@ -10,6 +10,6 @@
 function [tsDataBlock] = Poll_Time_Stamp_Data(Obj)
   nTimeStamps = Obj.tsBytesAvailable/8; % 1 Timestamp = 8 Byte
   % ----- get available timestamps -----
-  [errCode, tsDataBlock] = spcm_dwGetTimestampData(Obj.cardInfo.hDrv, nTimeStamps);
-  tsDataBlock = tsDataBlock(1:2:end); % get only lowwer 8-bytes
+  [~, tsDataBlock] = spcm_dwGetTimestampData(Obj.cardInfo.hDrv, nTimeStamps);
+  tsDataBlock = tsDataBlock(1:2:end); % get only lower 8-bytes
 end

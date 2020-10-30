@@ -67,10 +67,11 @@ classdef FiFoSettings < handle
   methods % normal methods
 
     function Set_shotsPerNotify(FiFo)
-      % target notify size at which we get best performance
-      % 1024 kiB
+      targetSize = 512*1e3; % [Bytes]
       % targetSize = 1024*1e3; % [Bytes]
-      targetSize = 8192*1e3; % [Bytes]
+      % targetSize = 4096*1e3; % [Bytes]
+      % targetSize = 8192*1e3; % [Bytes]
+      
       nShotsPerNotify = targetSize ./ FiFo.shotByteSize; 
         % for 512 - 2048 samples, nShotsPerNotify will be 125 - 500 shots
       % maxShotsPerNotify = round(FiFo.shotsinBuffer ./ 10);

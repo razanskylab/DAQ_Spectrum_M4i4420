@@ -1,10 +1,23 @@
 % File: Setup_External_Trigger.m @ FastObj
-% Author: Johannes Reblimg
-% Mail: johannesrebling@gmail.com
+
+% Info From Matlab Manual 
+% [success, cardInfo] = spcMSetupTrigExternal(cardInfo, extMode, trigTerm, ...
+%     pulsewidth, singleSrc, extLine);
+% Programs the external trigger mode. 
+% - „extMode“ value must contain a valid external mode as described in the 
+% hardware manual.
+% = „trigTerm“ flag defines whether to terminate the trigger 
+% „pulsewidth“ value programs the pulsewidth for any external trigger
+% mode that uses a pulsewidth counter. 
+% - if „singleSrc“ flag is set the external trigger is the only trigger source 
+% and all other trigger sources are disabled.
+% When not programming the „singleSrc“ flag it is necessary to program the
+%  OR and AND mask manually allowing to combine several trigger sources. 
+% - „extLine“ parameter allows to select different possible TTL sources, 
+% if available on the particular card.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Setup external TTL trigger
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % extModes:
 % 1 = SPC_TM_POS = trigger detection for positive edges
 % 2 = SPC_TM_NEG = Trigger detection for negative edges
