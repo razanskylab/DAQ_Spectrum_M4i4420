@@ -9,20 +9,18 @@ function Print_FiFo_Info(Obj)
   FiFo.Set_shotsPerNotify();
 
   siStr = num_to_SI_string(FiFo.nShots);
-  totalShotsStr = sprintf('%s',siStr);
+  totalShotsStr = sprintf('%s', siStr);
 
-  siStr = num_to_SI_string(FiFo.totalBytes);
-  totalBytesStr = sprintf('%sB',siStr);
+  shotByteSizeStr = num2bip(FiFo.shotByteSize,3,false,true);
+  notifySizeStr = num2bip(FiFo.notifySize,3,false,true);
+  bufferSizeStr = num2bip(FiFo.bufferSize,3,false,true);
+  totalBytesStr = num2bip(FiFo.totalBytes,3,false,true);
 
   Obj.VPrintF_With_ID('Multi-FiFo acqusition settings:\n');
 
-  Obj.VPrintF('   Samples/Shot: %2.0f (%2.2f kB)\n',...
-    FiFo.shotSize,FiFo.shotByteSize*1e-3);
-  Obj.VPrintF('   Buffer Size:  %2.2f MB | ',FiFo.bufferSize*1e-6);
-  Obj.VPrintF('   Notify Size:  %2.2f MB (%2.0f shots)\n',...
-    FiFo.notifySize*1e-6,FiFo.shotsPerNotify);
-
-  Obj.VPrintF('   Total Shots: %s \n',totalShotsStr);
-  Obj.VPrintF('   Total Data: %s\n',totalBytesStr);
+  Obj.VPrintF('    Shot Size: %i S / %sB \n', FiFo.shotSize, shotByteSizeStr);
+  Obj.VPrintF('  Notify Size: %sB / %i shots\n', notifySizeStr, FiFo.shotsPerNotify);
+  Obj.VPrintF('  Buffer Size: %sB / %i shots\n', bufferSizeStr, FiFo.shotsinBuffer);
+  Obj.VPrintF('   Total Size: %sS / %sB / %i blocks\n', totalShotsStr, totalBytesStr,FiFo.nBlocks);
 
 end

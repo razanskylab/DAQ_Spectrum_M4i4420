@@ -14,28 +14,6 @@
 
 classdef M4DAC16 < BaseHardwareClass
 
-  properties (Constant = true)
-    NO_CHANNELS = 2;
-    cardPort = '\dev\spcm0';
-
-    CONNECT_ON_STARTUP = 1;
-    BYTES_PER_SAMPLE = 2; % [Byte] 16 bit = 2 bytes...
-    RESOLUTION = 16; % 16 bit ADC resolution
-
-    % FLAGS for convenience
-    SAMPLE_DATA = 0;
-    TIMESTAMP_DATA = 1;
-
-    % DEFAULT Settings
-    TIME_OUT = 5000;
-    SAMPLING_RATE = 250e6;
-    DELAY = 0;
-    TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
-  end
-
-  properties (Dependent)
-    isConnected(1,1) {mustBeNumericOrLogical};
-  end
 
   % Properties of data acquisition card
   properties
@@ -45,9 +23,12 @@ classdef M4DAC16 < BaseHardwareClass
     FiFo(1, 1) FiFoSettings; % subclass for storing fifo settings
     comSuccess(1,1) {mustBeNumericOrLogical} = 1; % either 0 or 1
 
+    samplingRate(1,1) {mustBeInteger,mustBeNonnegative}; % [Hz]
+    timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
+    delay(1,1) {mustBeInteger,mustBeNonnegative}; % Obj trigger delay in samples
     dataType(1, 1) {mustBeNumeric} = 0;
-    % 0: data are returned as 16 bit integer
-    % 1: data are returned as voltage (single)
+      % 0: data are returned as 16 bit integer
+      % 1: data are returned as voltage (single)
 
     % offset start address for data chunk to be read
     % NOTE ignored in FIFO mode
@@ -85,15 +66,12 @@ classdef M4DAC16 < BaseHardwareClass
 
     mRegs = spcMCreateRegMap();
     mErrors = spcMCreateErrorMap();
+
+    StausData = []; % used during fifo acquisition to store info on DAQ 
+      % status during fifo, see Wait_FiFo_Data() for how it's filled
+    StausFigure = [];
   end
 
-  % SET/GET properties, they are assigned their default values during class
-  % creation and get their values directly from the connected card
-  properties
-    samplingRate(1,1) {mustBeInteger,mustBeNonnegative}; % [Hz]
-    timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
-    delay(1,1) {mustBeInteger,mustBeNonnegative}; % Obj trigger delay in samples
-  end
 
   properties (Dependent = true)
     triggerCount; % read only, read from card
@@ -101,8 +79,29 @@ classdef M4DAC16 < BaseHardwareClass
     bytesAvailable; % available time stamp bytes
     currentError;
     sensitivity; % sensitivty of DAQ channel(s) read back from DAQ
+    isConnected(1,1) {mustBeNumericOrLogical};
+    Status;
+    isBlockReady; % included in Status, but only checks for this...
   end
 
+  properties (Constant = true)
+    NO_CHANNELS = 2;
+    cardPort = '\dev\spcm0';
+
+    CONNECT_ON_STARTUP = 1;
+    BYTES_PER_SAMPLE = 2; % [Byte] 16 bit = 2 bytes...
+    RESOLUTION = 16; % 16 bit ADC resolution
+
+    % FLAGS for convenience
+    SAMPLE_DATA = 0;
+    TIMESTAMP_DATA = 1;
+
+    % DEFAULT Settings
+    TIME_OUT = 5000;
+    SAMPLING_RATE = 250e6;
+    DELAY = 0;
+    TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
+  end
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -150,14 +149,20 @@ classdef M4DAC16 < BaseHardwareClass
   methods
     %---------------------------------------------------------------------------
     % Set/Get the timeout of the Obj in ms
-    function set.timeout(Obj, to)
-      errorCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, Obj.mRegs('SPC_TIMEOUT'), to); %#ok<*MCSUP>
-      if (errorCode ~= 0) 
-          [~, Obj.cardInfo] = spcMCheckSetError (errorCode, Obj.cardInfo);
-          spcMErrorMessageStdOut (Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
-          return;
+    function set.timeout(Obj, timeOut)
+      if Obj.isConnected
+        errorCode = spcm_dwSetParam_i32 (Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_TIMEOUT'), timeOut); %#ok<*MCSUP>
+        if (errorCode ~= 0) 
+            [~, Obj.cardInfo] = spcMCheckSetError (errorCode, Obj.cardInfo);
+            spcMErrorMessageStdOut (Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
+            return;
+        else
+          timeStr = num2sip(single(timeOut)./1000);
+          Obj.VPrintF_With_ID('Timeout set timeOut %ss.\n',timeStr);
+        end
       else
-        Obj.VPrintF_With_ID('Timeout set to %2.0f s.\n',to/1000);
+        short_warn('Need to connect to DAQ before trying to set values!');
       end
     end
 
@@ -168,80 +173,69 @@ classdef M4DAC16 < BaseHardwareClass
         [errCode, timeout] = spcm_dwGetParam_i32(Obj.cardInfo.hDrv, ...
           Obj.mRegs('SPC_TIMEOUT'));
         if errCode
+          timeOut = NaN; 
           Obj.Verbose_Warn('Could not read timeout!');
           Obj.Handle_Error();
-          timeOut = NaN; 
         end
       end
     end
     
-
-    %---------------------------------------------------------------------------
-    function set.triggerChannel(Obj, tc)
-      warning('Not tested yet.');
-
-      [success, Obj.cardInfo] = spcMSetupTrigChannel(Obj.cardInfo, ...
-        tc.channel, ... % channel used
-        tc.trigMode, ... % trigger mode
-        tc.trigLevel0, ...
-        tc.trigLevel1, ...
-        tc.pulsewidth, ...
-        tc.trigOut, ...
-        tc.singleSrc);
-      if ~success
-        error('Somthing went wrong while setting up the channel based trigger.');
-      else
-        Obj.triggerChannel = tc;
-      end
-    end
-
     %---------------------------------------------------------------------------
     function isConnected = get.isConnected(Obj)
       isConnected = ~isempty(Obj.cardInfo) && ~(Obj.cardInfo.hDrv == 0);
     end
 
+    %---------------------------------------------------------------------------
     function sensitivity = get.sensitivity(Obj)
-      sensitivity = zeros(1,Obj.NO_CHANNELS);
-      for iCh = 1:Obj.NO_CHANNELS
-        chStr = sprintf('SPC_AMP%i',iCh-1);
-        [errCode, tempSens] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, Obj.mRegs(chStr));
-        if errCode 
-          sensitivity(iCh) = NaN;
-          short_warn(sprintf('Failed to read sensitivity of channel %i!',iCh-1));
-        else
-          sensitivity(iCh) = tempSens;
+      if Obj.isConnected
+        sensitivity = zeros(1,Obj.NO_CHANNELS);
+        for iCh = 1:Obj.NO_CHANNELS
+          chStr = sprintf('SPC_AMP%i',iCh-1);
+          [errCode, tempSens] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, Obj.mRegs(chStr));
+          if errCode 
+            sensitivity(iCh) = NaN;
+            short_warn(sprintf('Failed to read sensitivity of channel %i!',iCh-1));
+          else
+            sensitivity(iCh) = tempSens;
+          end
         end
+      else
+        short_warn('Need to connect to DAQ before trying to set values!');
       end
     end
 
     %---------------------------------------------------------------------------
     % setting delay of data acquisition card
     function set.delay(Obj, delay)
-      Obj.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
+      if Obj.isConnected
+        Obj.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
 
-      % Check validity of delay
-      if (delay < 0)
-        warning('[M4DAC16] Delay cannot be below 0, setting it to 0 (disbaled).');
-        delay = 0;
-      elseif (delay > 8589934576)
-        warning('[M4DAC16] Delay is above maximum, reducing to 8589934576 samples');
-        delay = 8589934576;
+        % Check validity of delay
+        if (delay < 0)
+          warning('[M4DAC16] Delay cannot be below 0, setting it to 0 (disbaled).');
+          delay = 0;
+        elseif (delay > 8589934576)
+          warning('[M4DAC16] Delay is above maximum, reducing to 8589934576 samples');
+          delay = 8589934576;
+        else
+          % we have a valid trigger value, just make sure it's multiple
+          % integer of 16, as required by the Obj
+          delay = round(delay/16) * 16;
+        end
+
+        % set delay
+        errorCode = spcm_dwSetParam_i32(...
+          Obj.cardInfo.hDrv, ...
+          Obj.mRegs('SPC_TRIG_DELAY'), ... % defines the delay for the detected trigger events
+          delay); % delay in samples
+
+        if (errorCode ~= 0)
+          error(['[M4DAC16] Could not set delay: ', errorCode]);
+        else
+          Obj.delay = delay;
+        end
       else
-        % we have a valid trigger value, just make sure it's multiple
-        % integer of 16, as required by the Obj
-        delay = round(delay/16) * 16;
-      end
-
-      % set delay
-      errorCode = spcm_dwSetParam_i32(...
-        Obj.cardInfo.hDrv, ...
-        Obj.mRegs('SPC_TRIG_DELAY'), ... % defines the delay for the detected trigger events
-        delay); % delay in samples
-
-      if (errorCode ~= 0)
-        error(['[M4DAC16] Could not set delay: ', errorCode]);
-      else
-        Obj.delay = delay;
+        short_warn('Need to connect to DAQ before trying to set values!');
       end
     end
 
@@ -249,39 +243,43 @@ classdef M4DAC16 < BaseHardwareClass
     % Function to set sample rate of data acquisition card, takes care that we
     % do not exceed max and min limits and that we have an open connection
     function set.samplingRate(Obj, samplingRate)
-      maxRate = Obj.cardInfo.maxSamplerate;
+      if Obj.isConnected
+        maxRate = Obj.cardInfo.maxSamplerate;
 
-      if ~Obj.isConnected
-        Obj.Verbose_Warn('[M4DAC16] No open connection.');
-      else
-        if (samplingRate < Obj.cardInfo.minSamplerate)
-          Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
-            Obj.cardInfo.minSamplerate);
-          samplingRate = Obj.cardInfo.minSamplerate;
-        elseif (samplingRate > maxRate)
-          Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
-            maxRate);
-          samplingRate = maxRate;
-        end
-
-        if rem(maxRate,samplingRate)
-          samplingRate = maxRate ./ floor(maxRate / samplingRate);
-            % sets to next higher allowed sampling rate
-          warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
-          Obj.Verbose_Warn(warnText);
-        end
-
-        Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
-
-        [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
-
-        if ~success
-          Obj.samplingRate = NaN;
-          error(['[M4DAC16] Could not set the sampling rate:\n', ...
-            Obj.cardInfo.errorText]);
+        if ~Obj.isConnected
+          Obj.Verbose_Warn('[M4DAC16] No open connection.');
         else
-          Obj.samplingRate = samplingRate;
+          if (samplingRate < Obj.cardInfo.minSamplerate)
+            Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
+              Obj.cardInfo.minSamplerate);
+            samplingRate = Obj.cardInfo.minSamplerate;
+          elseif (samplingRate > maxRate)
+            Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
+              maxRate);
+            samplingRate = maxRate;
+          end
+
+          if rem(maxRate,samplingRate)
+            samplingRate = maxRate ./ floor(maxRate / samplingRate);
+              % sets to next higher allowed sampling rate
+            warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
+            Obj.Verbose_Warn(warnText);
+          end
+
+          Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
+
+          [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
+
+          if ~success
+            Obj.samplingRate = NaN;
+            error(['[M4DAC16] Could not set the sampling rate:\n', ...
+              Obj.cardInfo.errorText]);
+          else
+            Obj.samplingRate = samplingRate;
+          end
         end
+      else
+        short_warn('Need to connect to DAQ before trying to set values!');
       end
     end
 
@@ -373,6 +371,75 @@ classdef M4DAC16 < BaseHardwareClass
     function currentError = get.currentError(Obj)
       [currentError, ~, ~, Obj.cardInfo.errorText] = ...
         spcm_dwGetErrorInfo_i32(Obj.cardInfo.hDrv);
+    end
+    %---------------------------------------------------------------------------
+    function [isBlockReady] = get.isBlockReady(Obj)
+      [~, regValue] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, ...
+        Obj.mRegs('SPC_M2STATUS'));
+      regValue = int32(regValue);
+      isBlockReady = logical(bitand(regValue, ...
+        Obj.mRegs('M2STAT_DATA_BLOCKREADY')));
+    end
+    %---------------------------------------------------------------------------
+    function [Status] = get.Status(Obj)
+      if Obj.isConnected
+        [errorVal, regValue] = spcm_dwGetParam_i64(Obj.cardInfo.hDrv, ...
+                                              Obj.mRegs('SPC_M2STATUS'));
+        if errorVal
+          Obj.Handle_Error(errorVal);
+          Status = NaN;
+        else
+          regValue = int32(regValue);
+          Status.regValue = regValue; % return raw value
+          Status.isConnected = true; % if we are here, we are connected
+          % now we analyze the individual bits, as per definition in the 
+          % manual we get them via hex values (but really it's just the
+          % individual bits...
+          % general status and trigger related ---------------------------------
+          Status.PRETRIGGER = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_CARD_PRETRIGGER')));
+            % Acquisition modes only: the pretrigger area has been filled.
+          Status.TRIGGER = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_CARD_TRIGGER')));
+            % The first trigger has been detected.
+          Status.READY = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_CARD_READY')));
+            % The card has finished its run and is ready.
+          Status.SEGMENT_PRETRG = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_CARD_SEGMENT_PRETRG')));
+            % the pretrigger area of one segment has been filled.
+
+          % data transfer related ----------------------------------------------
+          Status.BLOCKREADY = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_DATA_BLOCKREADY')));
+            % The next data block is available
+          Status.END = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_DATA_END')));
+            % The data transfer has completed.
+          Status.OVERRUN = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_DATA_OVERRUN')));
+            % The data transfer had on overrun while doing FIFO transfer
+          Status.DATA_ERROR = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_DATA_ERROR')));
+            % An internal error occurred 
+
+          % fifo transfer related? ---------------------------------------------
+          Status.EXTRA_BLOCKREADY = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_EXTRA_BLOCKREADY')));
+            % next data block as defined in the notify size is available
+          Status.EXTRA_END = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_EXTRA_END')));
+            % The data transfer has completed
+          Status.EXTRA_OVERRUN = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_EXTRA_OVERRUN')));
+            % The data transfer had on overrun while doing FIFO transfer
+          Status.EXTRA_ERROR = logical(bitand(regValue, ...
+                                        Obj.mRegs('M2STAT_EXTRA_ERROR')));
+            % An internal error occurred 
+        end
+      else
+        Status = [];
+      end
     end
 
     %---------------------------------------------------------------------------
