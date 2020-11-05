@@ -72,7 +72,6 @@ classdef M4DAC16 < BaseHardwareClass
     StausFigure = [];
   end
 
-
   properties (Dependent = true)
     triggerCount; % read only, read from card
     tsBytesAvailable; % available time stamp bytes
@@ -101,6 +100,7 @@ classdef M4DAC16 < BaseHardwareClass
     SAMPLING_RATE = 250e6;
     DELAY = 0;
     TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
+    PRE_TRIGGER = 16; % in samples, used for multi and fifo mode...
   end
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -333,7 +333,7 @@ classdef M4DAC16 < BaseHardwareClass
           Obj.mRegs('SPC_TRIGGERCOUNTER'));
         if errCode
           Obj.Verbose_Warn('Could not read triggerCount!');
-          Obj.Handle_Error();
+          Obj.Handle_Error(errCode);
           triggerCount = NaN; 
         end
       end

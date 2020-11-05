@@ -94,7 +94,7 @@ classdef FiFoSettings < handle
         % Obj.Set_shotsPerNotify();
       else
         Obj.shotsPerNotify = min(iShot(possibleValues));
-        Obj.shotsinBuffer = Obj.shotsPerNotify * 10; 
+        Obj.shotsinBuffer = Obj.shotsPerNotify * 20; 
           % as per SPECTRUM for best performance would be 4*notifysize BUT
           % that can easily cause a buffer overflow
       end
