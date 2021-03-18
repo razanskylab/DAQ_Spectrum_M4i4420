@@ -20,7 +20,7 @@
 function Setup_External_Trigger_Level(Obj,triggerSetup)
 
   tic;
-  Obj.VPrintF_With_ID('Setting up the external trigger level...')
+  Obj.VPrintf('[M4DAC16] Setting up the external trigger level...')
 
   [success, Obj.cardInfo] = spcMSetupTrigExternalLevel(...
     Obj.cardInfo, ...

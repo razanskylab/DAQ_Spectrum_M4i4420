@@ -12,13 +12,13 @@ function Open_Connection(Obj)
 
     % Check if opening was successfully
     if (success)
-      Obj.VPrintF_With_ID('Connection established!\n');
+      Obj.VPrintf('[M4DAC16] Connection established!\n');
     else
       spcMErrorMessageStdOut(Obj.cardInfo, 'Error: Could not open card\n', true);
     end
 
   else
-    Obj.VPrintF_With_ID('Connection was already established.\n');
+    Obj.VPrintf('[M4DAC16] Connection was already established.\n');
   end
 
 end

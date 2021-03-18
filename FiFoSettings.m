@@ -3,26 +3,32 @@ classdef FiFoSettings < handle
   properties
     nShots(1, 1) uint64 {mustBeInteger,mustBeNonnegative};
       % total number of shots acquired on both channels
+
     shotSize(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 1024 * 1;
       % size of a shot in samples
       % pratical lower limit is 512 for complicated fifo reasons related to
       % block size etc...can prob. be fixed if this ever becomes a limitation
       % but might require math which Joe does not like...
+
     shotSizePd(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % optional, can be used to record shorter shots
       % see Acquire_Multi_FIFO_Data() and Allocate_Raw_Data()
+
     shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 50;
-    % shotsinBuffer(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 2048 * 10;
       % size of the FIFO buffer in shots
       % NOTE play with this for better performance if needed! (already made it larger...)
       % NOTE 2: made it A LOT larger (was 80 Mb, now ~1.6 GB) to avoid buffer overrruns...
       % still seems to work fine with small volumes as well...
+
     dataType(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % 0 = RAW (int16), 1 = float
+
     nChannels(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % 1/2 -> must match setup prior to FIFO acquisition
+
     currentBlock(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
       % 1/2 -> must match setup prior to FIFO acquisition
+
     shotsPerBScan(1, 1) uint64 {mustBeInteger,mustBeNonnegative} = 0;
   end
 
@@ -67,44 +73,62 @@ classdef FiFoSettings < handle
 
   methods % normal methods
 
-    function Set_shotsPerNotify(Obj)
+    function Set_shotsPerNotify(FiFo)
+      % shotsPerNotify should be a multifold of 4096
 
-      % targetSize = Obj.shotsPerBScan .* Obj.shotByteSize;
-      nShotsPerNotify =  Obj.shotsPerBScan;
-      if (~nShotsPerNotify || isempty(nShotsPerNotify))
-        nShotsPerNotify = 96; % use decent default if we have to...
-      end
-      % targetSize = 1024*1e3; % [Bytes]
-      % targetSize = 4096*1e3; % [Bytes]
-      % targetSize = 8192*1e3; % [Bytes]
-      % nShotsPerNotify = targetSize ./ Obj.shotByteSize; 
-      
-        % for 512 - 2048 samples, nShotsPerNotify will be 125 - 500 shots
-      % maxShotsPerNotify = round(Obj.shotsinBuffer ./ 10);
+      maxShotsPerNotify = round(FiFo.shotsinBuffer ./ 10);
+      % shotsInBuffer represents maximum buffer size before overflow
 
-      iShot = (nShotsPerNotify):(nShotsPerNotify*10); % define range of number of shots in one notify
-      notifySize = iShot * Obj.shotByteSize; % convert into byte
-      goodNotifySize = ~mod(notifySize, 4096); %#ok<*PROP> % check if multifold of 4096 byte
-      integerBlocks = ~mod(Obj.totalBytes, notifySize);
+      iShot = 1:maxShotsPerNotify; % all possible shotsPreNotify
+      notifySize = iShot * FiFo.shotByteSize;
+      goodNotifySize = ~mod(notifySize, 4096);
+      integerBlocks = ~mod(FiFo.totalBytes, notifySize);
       possibleValues = (goodNotifySize & integerBlocks);
 
       if ~any(possibleValues)
-        error('No suitable shotsPerNotify found!');
-        % Obj.shotSize = Obj.shotSize + 16;
-        % Obj.Set_shotsPerNotify();
+        short_warn('No suitable shotsPerNotify found, trying longer shots');
+        FiFo.shotSize = FiFo.shotSize + 16;
+        FiFo.Set_shotsPerNotify();
       else
-        Obj.shotsPerNotify = min(iShot(possibleValues));
-        Obj.shotsinBuffer = Obj.shotsPerNotify * 20; 
-          % as per SPECTRUM for best performance would be 4*notifysize BUT
-          % that can easily cause a buffer overflow
-      end
+        FiFo.shotsPerNotify = max(iShot(possibleValues));        
+      end 
+
+      % This is a mess Johannes created once which is untested and does not work
+
+      % % targetSize = Obj.shotsPerBScan .* Obj.shotByteSize;
+      % nShotsPerNotify =  Obj.shotsPerBScan;
+      % if (~nShotsPerNotify || isempty(nShotsPerNotify))
+      %   nShotsPerNotify = 96; % use decent default if we have to...
+      % end
+      % % targetSize = 1024*1e3; % [Bytes]
+      % % targetSize = 4096*1e3; % [Bytes]
+      % % targetSize = 8192*1e3; % [Bytes]
+      % % nShotsPerNotify = targetSize ./ Obj.shotByteSize; 
+      
+      %   % for 512 - 2048 samples, nShotsPerNotify will be 125 - 500 shots
+      % maxShotsPerNotify = round(Obj.shotsinBuffer ./ 10);
+
+      % iShot = (nShotsPerNotify):(nShotsPerNotify*10); 
+      % % define range of number of shots in one notify
+      
+      % notifySize = iShot * Obj.shotByteSize; % convert into byte
+      % goodNotifySize = ~mod(notifySize, 4096); %#ok<*PROP> % check if multifold of 4096 byte
+      % integerBlocks = ~mod(Obj.totalBytes, notifySize);
+      % possibleValues = (goodNotifySize & integerBlocks);
+
+      % if ~any(possibleValues)
+      %   error('No suitable shotsPerNotify found!');
+      %   % Obj.shotSize = Obj.shotSize + 16;
+      %   % Obj.Set_shotsPerNotify();
+      % else
+      %   Obj.shotsPerNotify = min(iShot(possibleValues));
+      %   Obj.shotsinBuffer = Obj.shotsPerNotify * 20; 
+      %     % as per SPECTRUM for best performance would be 4*notifysize BUT
+      %     % that can easily cause a buffer overflow
+      % end
 
     end
 
-  end
-
-  % set / get functions
-  methods % get functions for depended properties
     function postSamples = get.postSamples(FiFo)
       % see manual for description of pre/post trigger samples
       postSamples = FiFo.shotSize - FiFo.PRE_TRIGGER_SAMPLES; %% min allowed!

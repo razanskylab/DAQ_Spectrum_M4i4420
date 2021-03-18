@@ -12,7 +12,7 @@
 %   - Add a function which checks the integrity of all passed arguments
 % - lots of other thigns ;-)
 
-classdef M4DAC16 < BaseHardwareClass
+classdef M4DAC16 < handle
 
 
   % Properties of data acquisition card
@@ -70,6 +70,8 @@ classdef M4DAC16 < BaseHardwareClass
     StausData = []; % used during fifo acquisition to store info on DAQ 
       % status during fifo, see Wait_FiFo_Data() for how it's filled
     StausFigure = [];
+    flagVerbose(1, 1) logical = 1; % turn verbose output on / off
+    flagDisplay(1, 1) logical; % turn graphicla output on / off
   end
 
   properties (Dependent = true)
@@ -94,19 +96,14 @@ classdef M4DAC16 < BaseHardwareClass
     % FLAGS for convenience
     SAMPLE_DATA = 0;
     TIMESTAMP_DATA = 1;
-
-    % DEFAULT Settings
-    TIME_OUT = 5000;
-    SAMPLING_RATE = 250e6;
+    TIME_OUT = 5000; % in ms
+    SAMPLING_RATE = 250e6; % in Hz
     DELAY = 0;
     TIME_STAMP_SIZE = 8; % [Byte] time stamp is 64 bit -> 8 byte
     PRE_TRIGGER = 16; % in samples, used for multi and fifo mode...
   end
 
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   methods
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Constructor
     function Obj = M4DAC16(doConnect)
       if nargin == 0
@@ -114,40 +111,27 @@ classdef M4DAC16 < BaseHardwareClass
       end
 
       if doConnect
-        Obj.VPrintF_With_ID('Connecting and setting up...');
-        Obj.verboseOutput = false;
         Obj.Open_Connection();
         Obj.Reset(); % recommended by manual
         Obj.samplingRate = Obj.SAMPLING_RATE;
         Obj.timeout = Obj.TIME_OUT;
-        Obj.verboseOutput = true;
-        Obj.VPrintF('...done!\n');
-
       else
-        Obj.VPrintF_With_ID('Initialized but not connected yet.\n');
+        Obj.VPrintf('[M4DAC16] Initialized but not connected yet.\n');
       end
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Save function
     function saveObj = saveobj(~)
       saveObj = [];
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Destructor
     function delete(Obj)
       if Obj.isConnected
         Obj.Close_Connection();
       end
     end
-  end
-
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  % SET / GET functions
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  methods
-    %---------------------------------------------------------------------------
+ 
     % Set/Get the timeout of the Obj in ms
     function set.timeout(Obj, timeOut)
       if Obj.isConnected
@@ -158,15 +142,14 @@ classdef M4DAC16 < BaseHardwareClass
             spcMErrorMessageStdOut (Obj.cardInfo, 'Error: spcm_dwSetParam_i32:\n\t', true);
             return;
         else
-          timeStr = num2sip(single(timeOut)./1000);
-          Obj.VPrintF_With_ID('Timeout set timeOut %ss.\n',timeStr);
+          Obj.VPrintf('[M4DAC16] Timeout set timeOut %f s.\n',single(timeOut / 1000));
         end
       else
         short_warn('Need to connect to DAQ before trying to set values!');
       end
     end
 
-    %---------------------------------------------------------------------------
+    % return defined timeout
     function timeout = get.timeout(Obj)
       timeout = [];
       if Obj.isConnected
@@ -180,12 +163,10 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
     
-    %---------------------------------------------------------------------------
     function isConnected = get.isConnected(Obj)
       isConnected = ~isempty(Obj.cardInfo) && ~(Obj.cardInfo.hDrv == 0);
     end
 
-    %---------------------------------------------------------------------------
     function sensitivity = get.sensitivity(Obj)
       if Obj.isConnected
         sensitivity = zeros(1,Obj.NO_CHANNELS);
@@ -204,11 +185,10 @@ classdef M4DAC16 < BaseHardwareClass
       end
     end
 
-    %---------------------------------------------------------------------------
     % setting delay of data acquisition card
     function set.delay(Obj, delay)
       if Obj.isConnected
-        Obj.VPrintF_With_ID(['Setting the delay to ', num2str(delay), ' samples.\n']);
+        Obj.VPrintf(['[M4DAC16] Setting the delay to ', num2str(delay), ' samples.\n']);
 
         % Check validity of delay
         if (delay < 0)
@@ -266,7 +246,7 @@ classdef M4DAC16 < BaseHardwareClass
             Obj.Verbose_Warn(warnText);
           end
 
-          Obj.VPrintF_With_ID('Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
+          Obj.VPrintf('[M4DAC16] Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);
 
           [success, Obj.cardInfo] = spcMSetupClockPLL(Obj.cardInfo, samplingRate, 0);
 
@@ -285,7 +265,7 @@ classdef M4DAC16 < BaseHardwareClass
 
     %---------------------------------------------------------------------------
     function set.acquisitionMode(Obj, acquisitionMode)
-      Obj.VPrintF_With_ID('Setting up data acquisistion mode.\n');
+      Obj.VPrintf('[M4DAC16] Setting up data acquisistion mode.\n');
 
       Obj.acquisitionMode = acquisitionMode;
 
@@ -314,11 +294,11 @@ classdef M4DAC16 < BaseHardwareClass
       if (dataType == 0)
         % 16 bit integer
         Obj.dataType = 0;
-        Obj.VPrintF_With_ID('Setting the datatype to 16 bit integer.\n');
+        Obj.VPrintf('[M4DAC16] Setting the datatype to 16 bit integer.\n');
       elseif (dataType == 1)
         % voltage as single
         Obj.dataType = 1;
-        Obj.VPrintF_With_ID('Setting the datatype to voltage.\n');
+        Obj.VPrintf('[M4DAC16] Setting the datatype to voltage.\n');
       else
         % invalid argument
         error('[M4DAC16] You passed an invalid option as dataType.');

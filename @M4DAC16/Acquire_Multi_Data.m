@@ -5,7 +5,7 @@
 
 function varargout = Acquire_Multi_Data(Obj)
   tic;
-  Obj.VPrintF_With_ID('Reading back multi-data...');
+  Obj.VPrintf('[M4DAC16] Reading back multi-data... ');
 
   % wait for new data to be ready...
   waitReadyError = spcm_dwSetParam_i32(...
@@ -42,6 +42,6 @@ function varargout = Acquire_Multi_Data(Obj)
   else
     error('Too many output arguments!');
   end
-  Obj.Done();
+  Obj.VPrintf('done!\n');
 
 end

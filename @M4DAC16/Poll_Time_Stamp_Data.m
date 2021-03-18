@@ -7,7 +7,7 @@
 % has been acquired, this function polls that last bit of data
 % also used in the Get_Next_Fifo_Block function to keep things clean
 
-function [tsDataBlock,freqData] = Poll_Time_Stamp_Data(Obj,updateFreqInfo,targetFreq)
+function [tsDataBlock,freqData] = Poll_Time_Stamp_Data(Obj, updateFreqInfo, targetFreq)
 
   nTimeStamps = Obj.tsBytesAvailable/8; % 1 Timestamp = 8 Byte
 
@@ -24,7 +24,7 @@ function [tsDataBlock,freqData] = Poll_Time_Stamp_Data(Obj,updateFreqInfo,target
     % collect freq. info for real time plotting
     timeData = single(tsDataBlock)./Obj.samplingRate;
     freqData = (1./diff(timeData))*1e-3; % trig. freq. in kHz
-    targetFreq = targetFreq*1e-3; % convert target to kHz
+    targetFreq = targetFreq * 1e-3; % convert target to kHz
       
     % theoretical max. freq. based on stage speed and step size
     lowFreqLim = targetFreq.*0.2; % we expect to have quite a few slower shots...

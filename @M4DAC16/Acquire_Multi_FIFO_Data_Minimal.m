@@ -70,12 +70,12 @@ function [ch0, ch1, tsData] = Acquire_Multi_FIFO_Data_Minimal(Obj)
 
     % FIXME only do this once in a while for better performance?
     if (Obj.tsBytesAvailable >= notifySizeTS)
-      tsData = [tsData Obj.Poll_Time_Stamp_Data()];
+      tsData = [tsData Obj.Poll_Time_Stamp_Data(0, 0)];
     end
   end
 
   % poll last TS data here
-  tsLastShots = Obj.Poll_Time_Stamp_Data();
+  tsLastShots = Obj.Poll_Time_Stamp_Data(0, 0);
   tsData = [tsData tsLastShots];
   tsData = single(tsData) ./ single(Obj.samplingRate);
 
@@ -88,12 +88,12 @@ function [ch0, ch1, tsData] = Acquire_Multi_FIFO_Data_Minimal(Obj)
   if (Obj.triggerCount ~= Obj.FiFo.nShots)
     warnText = sprintf('Trigger count: %i Expected shots: %i!\n',...
       Obj.triggerCount, Obj.FiFo.nShots);
-    Obj.Verbose_Warn(warnText);
+    warning(warnText);
   end
 
   if forcedTriggers
     warnText = sprintf('We forced %i trigger events!\n', forcedTriggers);
-    Obj.Verbose_Warn(warnText);
+    warning(warnText);
   end
 
 end

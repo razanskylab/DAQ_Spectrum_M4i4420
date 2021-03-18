@@ -11,9 +11,9 @@ function Close_Connection(Obj)
   if (Obj.isConnected)
     spcMCloseCard(Obj.cardInfo);
     Obj.cardInfo = [];
-    Obj.VPrintF_With_ID('Connection to DAQ closed.\n');
+    Obj.VPrintf('[M4DAC16] Connection to DAQ closed.\n');
   else
-    Obj.VPrintF_With_ID('');
+    Obj.VPrintf('M4DAC16 ');
     short_warn('Cannot close connection to card, it was not opened.');
   end
 

@@ -2,8 +2,8 @@
 % Mail:     johannesrebling@gmail.com
 
 function Setup_FIFO_Multi_Mode(Obj)
-  tic();
-  Obj.VPrintF_With_ID('Preparing Multi-FiFo acquisition...');
+  
+  Obj.VPrintf('[M4DAC16] Preparing Multi-FiFo acquisition...');
 
   % SETUP FIFO SETTINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % spcMSetupModeRecFIFOMulti (Obj.cardInfo, chEnableH, chEnableL, segmentSize, postSamples,segmentsToRec);
@@ -53,6 +53,6 @@ function Setup_FIFO_Multi_Mode(Obj)
     error(Obj.cardInfo.errorText);
   end
 
-  Obj.Done();
+  Obj.VPrintf('done!\n');
 
 end

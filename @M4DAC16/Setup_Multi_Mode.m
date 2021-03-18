@@ -1,3 +1,10 @@
+% File: Setup_Multi_mode.m @ M4DAC16
+% Author: Urs Hofmann
+% Mail: hofmannu@ethz.ch
+% Date: 20.02.2021
+
+% Description: Starts multimode data acquisition
+
 function Setup_Multi_Mode(Obj)
 
 	% Check if card type supports this
@@ -6,14 +13,13 @@ function Setup_Multi_Mode(Obj)
 	end
 	tic;
 
-	nShots = Obj.multiMode.memsamples ./ Obj.multiMode.segmentsize;
+	nShots = Obj.multiMode.memsamples ./ uint64(Obj.multiMode.segmentsize);
 	nBytes = Obj.multiMode.memsamples .* 2;
-	byteStr =  num2sip(nBytes);
-	Obj.VPrintF_With_ID('Setting up multi mode:  \n');
-	Obj.VPrintF_With_ID('          # of shots: %i \n',nShots);
-	Obj.VPrintF_With_ID('   # of samples/shot: %i \n',Obj.multiMode.segmentsize);
-	Obj.VPrintF_With_ID('     # of bytes/shot: %i \n',Obj.multiMode.segmentsize*2);
-	Obj.VPrintF_With_ID('    # of total bytes: %sB\n',byteStr);
+	Obj.VPrintf('[M4DAC16] Setting up multi mode:  \n');
+	Obj.VPrintf('[M4DAC16] 	# of shots: %i \n',nShots);
+	Obj.VPrintf('[M4DAC16]  # of samples/shot: %i \n',Obj.multiMode.segmentsize);
+	Obj.VPrintf('[M4DAC16]  # of bytes/shot: %i \n',Obj.multiMode.segmentsize*2);
+	Obj.VPrintf('[M4DAC16]  # of total bytes: %iB\n', nBytes);
 	
 	[success, Obj.cardInfo] = spcMSetupModeRecStdMulti(...
 		Obj.cardInfo, ...
@@ -29,10 +35,9 @@ function Setup_Multi_Mode(Obj)
 		% channel after trigger event
 
 	if (success ~= 1)
-		error('   Could not setup multi mode.');
+		error('Could not setup multi mode.');
 	else
-		Obj.VPrintF_With_ID('Setting up multi mode ');
-		Obj.Done();
+		Obj.VPrintf('[M4DAC16] Multimode successfully set up.\n');
 	end
 
 end

@@ -11,7 +11,7 @@
 
 function Enable_Trigger(Obj)
   tic;
-  Obj.VPrintF_With_ID('Enabling trigger input...');
+  Obj.VPrintf('[M4DAC16] Enabling trigger input...');
   errCode = spcm_dwSetParam_i32(...
   	Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_ENABLETRIGGER'));
   if (errCode ~= 0)
@@ -19,5 +19,5 @@ function Enable_Trigger(Obj)
     spcMErrorMessageStdOut (Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
     error(Obj.cardInfo.errorText);
   end
-  Obj.Done();
+  Obj.VPrintf('done!\n');
 end

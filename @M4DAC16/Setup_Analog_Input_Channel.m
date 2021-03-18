@@ -4,7 +4,7 @@
 
 function Setup_Analog_Input_Channel(Obj, channel, settings)
   tic;
-  Obj.VPrintF_With_ID('Setting up channel %i...',channel);
+  Obj.VPrintf('[M4DAC16] Setting up channel %i...',channel);
 
   % input ranges of path 0 (Buffered):
     % 200 =   ± 200 mV calibrated input range

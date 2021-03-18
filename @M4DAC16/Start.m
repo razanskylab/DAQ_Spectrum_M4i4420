@@ -11,12 +11,12 @@
 
 function Start(Obj)
   tic;
-  Obj.VPrintF_With_ID('Starting (trigger not enabled!)...');
+  Obj.VPrintf('[M4DAC16] Starting (trigger not enabled!)...');
   errCode = spcm_dwSetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_START'));
   if (errCode ~= 0)
     [~, Obj.cardInfo] = spcMCheckSetError (errCode, Obj.cardInfo);
     spcMErrorMessageStdOut (Obj.cardInfo, 'spcm_dwSetParam_i32:\n\t', true);
     error(Obj.cardInfo.errorText);
   end
-  Obj.Done();
+  Obj.VPrintf('done!\n');
 end

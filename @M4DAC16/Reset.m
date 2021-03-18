@@ -7,7 +7,7 @@
 
 function Reset(Obj)
 	tic;
-	Obj.VPrintF_With_ID('Software reset...')
+	Obj.VPrintf('[M4DAC16] Software reset...')
 	errorCode = spcm_dwSetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_RESET'));
 	if (errorCode ~= 0)
 		[~, Obj.cardInfo] = spcMCheckSetError (errorCode, Obj.cardInfo);
