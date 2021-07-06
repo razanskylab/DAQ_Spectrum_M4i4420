@@ -25,7 +25,7 @@ classdef M4DAC16 < handle
 
     samplingRate(1,1) {mustBeInteger,mustBeNonnegative}; % [Hz]
     timeout(1,1) {mustBeInteger,mustBeNonnegative}; % [ms] 0 means disabled
-    delay(1,1) {mustBeInteger,mustBeNonnegative}; % Obj trigger delay in samples
+    delay(1,1) {mustBeInteger, mustBeNonnegative}; % Obj trigger delay in samples
     dataType(1, 1) {mustBeNumeric} = 0;
       % 0: data are returned as 16 bit integer
       % 1: data are returned as voltage (single)
