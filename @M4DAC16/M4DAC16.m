@@ -227,14 +227,14 @@ classdef M4DAC16 < handle
         maxRate = Obj.cardInfo.maxSamplerate;
 
         if ~Obj.isConnected
-          Obj.Verbose_Warn('[M4DAC16] No open connection.');
+          warning('[M4DAC16] No open connection.');
         else
           if (samplingRate < Obj.cardInfo.minSamplerate)
-            Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be >= %5.0f', ...
+           warning('[M4DAC16] SamplingRate has to be >= %5.0f', ...
               Obj.cardInfo.minSamplerate);
             samplingRate = Obj.cardInfo.minSamplerate;
           elseif (samplingRate > maxRate)
-            Obj.Verbose_Warn('[M4DAC16] SamplingRate has to be <= %5.0f', ...
+            warning('[M4DAC16] SamplingRate has to be <= %5.0f', ...
               maxRate);
             samplingRate = maxRate;
           end
@@ -243,7 +243,7 @@ classdef M4DAC16 < handle
             samplingRate = maxRate ./ floor(maxRate / samplingRate);
               % sets to next higher allowed sampling rate
             warnText = sprintf('Using next higher allowed sampling rate (%2.1fMHz)',samplingRate*1e-6);
-            Obj.Verbose_Warn(warnText);
+            warning(warnText);
           end
 
           Obj.VPrintf('[M4DAC16] Setting sampling rate: %2.1fMHz \n', samplingRate*1e-6);

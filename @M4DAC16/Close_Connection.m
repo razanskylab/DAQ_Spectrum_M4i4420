@@ -13,8 +13,7 @@ function Close_Connection(Obj)
     Obj.cardInfo = [];
     Obj.VPrintf('[M4DAC16] Connection to DAQ closed.\n');
   else
-    Obj.VPrintf('M4DAC16 ');
-    short_warn('Cannot close connection to card, it was not opened.');
+    warning('[M4DAC16] Cannot close connection to card, it was not opened.');
   end
 
 end

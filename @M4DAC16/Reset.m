@@ -6,7 +6,6 @@
 % Description: Performs a software reset of the card
 
 function Reset(Obj)
-	tic;
 	Obj.VPrintf('[M4DAC16] Software reset...')
 	errorCode = spcm_dwSetParam_i32(Obj.cardInfo.hDrv, Obj.mRegs('SPC_M2CMD'), Obj.mRegs('M2CMD_CARD_RESET'));
 	if (errorCode ~= 0)

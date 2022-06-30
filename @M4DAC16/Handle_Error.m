@@ -7,9 +7,9 @@
 function Handle_Error(Obj, errCode)
   if (errCode ~= 0)
     if (errCode == 263)
-      short_warn('[DAQ] Timeout while waiting for a trigger!');
+      warning(args)('[DAQ] Timeout while waiting for a trigger!'); %short_warn change to warn, Xiang
     elseif errCode == 259
-      short_warn('[DAQ] Command sequence is not allowed!');
+      warning('[DAQ] Command sequence is not allowed!');
     elseif errCode == 16
       % there was an old error, read that one, then call this fct again...
       [errCode, ~, ~, ~] = spcm_dwGetErrorInfo_i32(Obj.cardInfo.hDrv);
